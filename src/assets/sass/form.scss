@@ -53,16 +53,16 @@
 
 .help-text {
   line-height: 1.3;
-  opacity: 0.6;
 
   a {
     text-decoration: underline;
   }
 
-  &.d-flex > i {
-    line-height: 1.4;
+  i {
+    vertical-align: text-bottom;
   }
 }
+
 ::-webkit-input-placeholder {
   /* WebKit, Blink, Edge */
   color: var(--theme-color-o50);

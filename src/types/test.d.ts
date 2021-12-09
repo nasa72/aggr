@@ -46,6 +46,7 @@ export interface Trade {
   price: number
   size: number
   side: 'buy' | 'sell'
+  amount?: number
   count?: number
   originalPrice?: number
   liquidation?: boolean

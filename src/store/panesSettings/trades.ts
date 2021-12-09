@@ -11,7 +11,8 @@ export interface Threshold {
   sellColor: string
   buyAudio: string
   sellAudio: string
-  gif?: string
+  buyGif?: string
+  sellGif?: string
 }
 
 export type TradeTypeFilter = 'both' | 'liquidations' | 'trades'
@@ -19,7 +20,7 @@ export type TradeTypeFilter = 'both' | 'liquidations' | 'trades'
 export interface TradesPaneState {
   _id?: string
   _booted?: boolean
-  liquidations: Threshold
+  liquidations: Threshold[]
   thresholds: Threshold[]
   audioThreshold: number
   showThresholdsAsTable: boolean
@@ -35,30 +36,60 @@ export interface TradesPaneState {
 }
 
 const getters = {
-  getThreshold: state => id => {
-    if (id === 'liquidations') {
-      return state.liquidations
-    }
-
+  getThreshold: state => (id: string) => {
     for (let i = 0; i < state.thresholds.length; i++) {
       if (state.thresholds[i].id === id) {
         return state.thresholds[i]
       }
     }
+
+    for (let i = 0; i < state.liquidations.length; i++) {
+      if (state.liquidations[i].id === id) {
+        return state.liquidations[i]
+      }
+    }
   }
 } as GetterTree<TradesPaneState, TradesPaneState>
 
-// https://coolors.co/d91f1c-eb1e2f-ef4352-77945c-3bca6d-00ff7f
-
 const state = {
-  liquidations: {
-    id: 'liquidations',
-    amount: 100000,
-    buyColor: 'rgb(103,58,183)',
-    sellColor: 'rgb(103,58,183)',
-    buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*5,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.1,,,'sine')",
-    sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*5,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.1,,,'sine')"
-  },
+  liquidations: [
+    {
+      id: 'threshold',
+      amount: 10000,
+      buyColor: 'rgba(236,64,122,0.5)',
+      sellColor: 'rgba(255,152,0,0.5)',
+      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
+      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
+    },
+    {
+      id: 'significant',
+      amount: 25000,
+      buyColor: 'rgba(236,64,122,0.6)',
+      sellColor: 'rgba(255,152,0,0.7)',
+      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
+      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
+    },
+    {
+      id: 'huge',
+      amount: 100000,
+      buyGif: 'rekt',
+      sellGif: 'rekt',
+      buyColor: 'rgba(236,64,122,0.7)',
+      sellColor: 'rgba(255,152,0,0.8)',
+      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
+      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
+    },
+    {
+      id: 'rare',
+      amount: 1000000,
+      buyGif: 'explosion',
+      sellGif: 'explosion',
+      buyColor: 'rgb(156,39,176)',
+      sellColor: 'rgb(255,235,59)',
+      buyAudio: "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
+      sellAudio: "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
+    }
+  ],
   thresholds: [
     {
       id: 'threshold',
@@ -81,7 +112,8 @@ play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08,,0)`
     {
       id: 'huge',
       amount: 1000000,
-      gif: 'cash',
+      buyGif: 'cash',
+      sellGif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
       buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);
@@ -96,7 +128,8 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24,,0)`
     {
       id: 'rare',
       amount: 10000000,
-      gif: 'explosion',
+      buyGif: 'explosion',
+      sellGif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
       buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0,,0);
@@ -235,8 +268,6 @@ const mutations = {
         }
       }
       threshold.amount = +value
-
-      this.commit(state._id + '/UPDATE_THRESHOLD', threshold)
     }
   },
   SET_THRESHOLD_MULTIPLIER(state, { identifier, multiplier }: { identifier: string; multiplier: number }) {
@@ -249,14 +280,16 @@ const mutations = {
   SET_THRESHOLD_GIF(state, payload) {
     const threshold = this.getters[state._id + '/getThreshold'](payload.id)
 
+    const key = payload.side + 'Gif'
+
     if (threshold) {
       if (payload.value.trim().length) {
-        threshold.gif = payload.value
+        threshold[key] = payload.value
       } else {
         payload.value = threshold.gif
         payload.isDeleted = true
 
-        threshold.gif = null
+        threshold[key] = null
       }
 
       this.commit(state._id + '/UPDATE_THRESHOLD', threshold)
@@ -277,8 +310,8 @@ const mutations = {
       threshold['sellAudio'] = sellAudio
     }
   },
-  ADD_THRESHOLD(state) {
-    const previousThreshold = state.thresholds[state.thresholds.length - 1]
+  ADD_THRESHOLD(state, type) {
+    const previousThreshold = state[type][state[type].length - 1]
 
     let buyAudio = `play(659.26, ratio, ratio, 0)`
     let sellAudio = `play(493.88, ratio, ratio, 0)`
@@ -288,9 +321,9 @@ const mutations = {
       sellAudio = previousThreshold.sellAudio
     }
 
-    state.thresholds.push({
+    state[type].push({
       id: randomString(8),
-      amount: state.thresholds[state.thresholds.length - 1].amount * 2,
+      amount: state[type][state.thresholds.length - 1].amount * 2,
       buyColor: 'rgb(0, 255, 0)',
       sellColor: 'rgb(255, 0, 0)',
       buyAudio,
@@ -298,22 +331,20 @@ const mutations = {
     })
   },
   DELETE_THRESHOLD(state, id: string) {
-    const index = state.thresholds.indexOf(state.thresholds.find(t => t.id === id))
+    const tradesIndex = state.thresholds.indexOf(state.thresholds.find(t => t.id === id))
 
-    state.thresholds.splice(index, 1)
-  },
-  UPDATE_THRESHOLD(state, threshold: Threshold) {
-    if (threshold.id === 'liquidations') {
-      state.liquidations = threshold
-    } else {
-      const index = state.thresholds.indexOf(state.thresholds.find(t => t.id === threshold.id))
+    if (tradesIndex !== -1) {
+      state.thresholds.splice(tradesIndex, 1)
 
-      if (index === -1) {
-        console.warn(`[${state._id}] couldn't update threshold ${threshold.id} (invalid index ${index})`)
-        return
-      }
+      return
+    }
 
-      Vue.set(state.thresholds, index, threshold)
+    const liquidationsIndex = state.liquidations.indexOf(state.liquidations.find(t => t.id === id))
+
+    if (liquidationsIndex !== -1) {
+      state.liquidations.splice(liquidationsIndex, 1)
+
+      return
     }
   },
   SET_AUDIO_THRESHOLD(state, amount: number) {

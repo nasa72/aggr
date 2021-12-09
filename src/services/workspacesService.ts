@@ -459,6 +459,10 @@ class WorkspacesService {
     return this.db.get('gifs', slug)
   }
 
+  getGifsKeywords() {
+    return this.db.getAllKeys('gifs')
+  }
+
   deleteGifs(slug: string) {
     return this.db.delete('gifs', slug)
   }

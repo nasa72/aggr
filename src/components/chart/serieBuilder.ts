@@ -14,7 +14,7 @@ import {
   IndicatorMarkets
 } from './chartController'
 import store from '@/store'
-import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments, randomString, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
 const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
 const SERIE_UPDATE_REGEX = /series\[\d+\]\.update\(/
@@ -394,7 +394,7 @@ export default class SerieBuilder {
 
       delete serieOptions.id
     } else {
-      id = this.getPlotId(rawFunctionArguments)
+      id = randomString(8)
     }
 
     const names = Object.keys(this.serieIndicatorsMap).concat(plots.map(plot => plot.id))
@@ -838,29 +838,6 @@ export default class SerieBuilder {
       'use strict'
       return new Function('renderer', FUNCTIONS_VAR_NAME, VARIABLES_VAR_NAME, 'series', 'options', 'utils', '"use strict"; ' + output)
     })() as IndicatorRealtimeAdapter
-  }
-
-  /**
-   * generate an id from argument passed to plot function
-   * @param input
-   * @returns
-   */
-  getPlotId(input: string) {
-    input = input.replace(/options\.([a-zA-Z0-9_]+)/g, '')
-
-    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(?:\\.\\w+)`, 'g')) || []
-
-    const dataUsed = (input.match(/renderer\.bar\.([a-zA-Z0-9_]+)/g) || [])
-      .map(name => name.replace('renderer.bar.', ''))
-      .filter(name => name !== 'bar')
-
-    const functionUsed = (input.match(new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')) || [])
-      .map(name => name.trim().slice(0, -1))
-      .filter(name => seriesUtils[name + '$'])
-
-    const meta = [...functionUsed, ...marketsUsed, ...dataUsed].filter((v, i, a) => a.indexOf(v) === i)
-
-    return slugify(meta.join('-'))
   }
 
   /**

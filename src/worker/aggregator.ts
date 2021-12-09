@@ -266,15 +266,15 @@ class Aggregator {
       }
     }
 
+    trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+
     if (this.settings.aggregationLength > 0) {
       trade.price = Math.max(trade.price, trade.originalPrice)
     }
 
     if (this.connections[marketKey].bucket) {
-      const size = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
-
       this.connections[marketKey].bucket['c' + trade.side] += trade.count
-      this.connections[marketKey].bucket['v' + trade.side] += size
+      this.connections[marketKey].bucket['v' + trade.side] += trade.amount
     }
 
     return trade
@@ -283,10 +283,10 @@ class Aggregator {
   processLiquidation(trade: Trade): Trade {
     const marketKey = trade.exchange + trade.pair
 
-    if (this.connections[marketKey].bucket) {
-      const size = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+    trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
-      this.connections[marketKey].bucket['l' + trade.side] += size
+    if (this.connections[marketKey].bucket) {
+      this.connections[marketKey].bucket['l' + trade.side] += trade
     }
 
     return trade

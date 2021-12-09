@@ -56,10 +56,6 @@ export default class extends Mixins(PaneMixin) {
   private _counters: Counter[]
   private _feed: string = null
 
-  get preferQuoteCurrencySize() {
-    return this.$store.state.settings.preferQuoteCurrencySize
-  }
-
   get liquidationsOnly() {
     return this.$store.state[this.paneId].liquidationsOnly
   }

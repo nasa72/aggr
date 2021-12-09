@@ -25,7 +25,7 @@
         title="Scripting documentation"
         v-tippy
         class="btn -text -white mlauto -start"
-        >scripting Wiki <span class="badge -red ml4">NEW</span></a
+        >scripting Wiki</a
       >
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">

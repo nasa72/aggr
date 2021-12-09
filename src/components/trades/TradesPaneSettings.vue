@@ -72,19 +72,39 @@
           <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
         </div>
 
-        <thresholds :paneId="paneId" :show-liquidations-threshold="tradeType === 'both'" />
+        <div class="form-group">
+          <label class="mb8">Trades</label>
+          <thresholds :paneId="paneId" :thresholds="thresholds" />
 
-        <div class="text-right mt8 mb8">
-          <a
-            href="javascript:void(0);"
-            class="btn ml4 -nowrap -text"
-            v-tippy
-            title="Add a threshold"
-            @click="$store.commit(paneId + '/ADD_THRESHOLD')"
-          >
-            Add
-            <i class="icon-plus ml4 text-bottom"></i>
-          </a>
+          <div class="text-right mt8 mb8">
+            <a
+              href="javascript:void(0);"
+              class="btn ml4 -nowrap -text"
+              v-tippy
+              title="Add a threshold"
+              @click="$store.commit(paneId + '/ADD_THRESHOLD', 'thresholds')"
+            >
+              Add
+              <i class="icon-plus ml4 text-bottom"></i>
+            </a>
+          </div>
+        </div>
+        <div class="form-group mt16">
+          <label class="mb8">Liquidations</label>
+          <thresholds :paneId="paneId" :thresholds="liquidations" />
+
+          <div class="text-right mt8 mb8">
+            <a
+              href="javascript:void(0);"
+              class="btn ml4 -nowrap -text"
+              v-tippy
+              title="Add a threshold"
+              @click="$store.commit(paneId + '/ADD_THRESHOLD', 'liquidations')"
+            >
+              Add
+              <i class="icon-plus ml4 text-bottom"></i>
+            </a>
+          </div>
         </div>
 
         <div v-if="displayGifWarning" class="d-flex help-text">
@@ -273,6 +293,14 @@ export default class extends Vue {
     return (this.$store.state[this.paneId] as TradesPaneState).maxRows
   }
 
+  get thresholds() {
+    return (this.$store.state[this.paneId] as TradesPaneState).thresholds
+  }
+
+  get liquidations() {
+    return (this.$store.state[this.paneId] as TradesPaneState).liquidations
+  }
+
   get showLogos() {
     return (this.$store.state[this.paneId] as TradesPaneState).showLogos
   }
@@ -287,10 +315,6 @@ export default class extends Vue {
 
   get showTradesPairs() {
     return (this.$store.state[this.paneId] as TradesPaneState).showTradesPairs
-  }
-
-  get thresholds() {
-    return (this.$store.state[this.paneId] as TradesPaneState).thresholds
   }
 
   get showThresholdsAsTable() {
@@ -346,7 +370,10 @@ export default class extends Vue {
   }
 
   get displayGifWarning() {
-    return this.disableAnimations && this.thresholds.filter(t => !!t.gif).length
+    return (
+      this.disableAnimations &&
+      (this.thresholds.filter(t => !!t.buyGif && !!t.sellGif).length || this.liquidations.filter(t => !!t.buyGif && !!t.sellGif).length)
+    )
   }
 
   formatAmount(amount) {
@@ -367,7 +394,7 @@ export default class extends Vue {
     const payload = await dialogService.openAsPromise(ThresholdPresetDialog)
 
     if (payload) {
-      if (!payload.amounts && !payload.audios && !payload.colors) {
+      if (!payload.thresholds && !payload.liquidations && !payload.amounts && !payload.audios && !payload.colors) {
         this.$store.dispatch('app/showNotice', {
           title: 'You did not select anything to save in the preset !',
           type: 'error'
@@ -377,29 +404,31 @@ export default class extends Vue {
 
       const audioPreset: any = {}
 
-      for (const key of [...Object.keys(this.$store.state[this.paneId].thresholds), 'liquidations']) {
-        let threshold
-
-        if (key === 'liquidations') {
-          threshold = this.$store.state[this.paneId].liquidations
-        } else {
-          threshold = this.$store.state[this.paneId].thresholds[key]
+      for (const type of ['thresholds', 'liquidations']) {
+        if (!payload[type]) {
+          continue
         }
 
-        audioPreset[key] = {}
+        audioPreset[type] = []
 
-        if (payload.amounts) {
-          audioPreset[key].amount = threshold.amount
-        }
+        for (const threshold of this.$store.state[this.paneId][type]) {
+          const partialThreshold: any = {}
 
-        if (payload.colors) {
-          audioPreset[key].buyColor = threshold.buyColor
-          audioPreset[key].sellColor = threshold.sellColor
-        }
+          if (payload.amounts) {
+            partialThreshold.amount = threshold.amount
+          }
 
-        if (payload.audios) {
-          audioPreset[key].buyAudio = threshold.buyAudio
-          audioPreset[key].sellAudio = threshold.sellAudio
+          if (payload.colors) {
+            partialThreshold.buyColor = threshold.buyColor
+            partialThreshold.sellColor = threshold.sellColor
+          }
+
+          if (payload.audios) {
+            partialThreshold.buyAudio = threshold.buyAudio
+            partialThreshold.sellAudio = threshold.sellAudio
+          }
+
+          audioPreset[type].push(partialThreshold)
         }
       }
 
@@ -408,82 +437,87 @@ export default class extends Vue {
   }
 
   applyAudioPreset(presetData?) {
-    const defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state))
+    const defaultSettings = JSON.parse(
+      JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state)
+    ) as TradesPaneState
 
-    let state
+    let updateThresholdsColors = null
+    let updateThresholdsAudios = null
+    let updateThresholdsAmounts = null
 
     if (presetData) {
-      let previousAmount = this.$store.state[this.paneId].thresholds[0].amount
+      for (const type of ['thresholds', 'liquidations']) {
+        if (!presetData[type]) {
+          continue
+        }
 
-      state = {
-        thresholds: Object.keys(presetData).reduce((arr, key) => {
-          if (key === 'liquidations') {
-            return arr
+        updateThresholdsAmounts = typeof presetData[type][0].amount !== 'undefined'
+        updateThresholdsColors = typeof presetData[type][0].buyColor !== 'undefined'
+        updateThresholdsAudios = typeof presetData[type][0].buyAudio !== 'undefined'
+
+        const replaceAll = updateThresholdsAmounts && updateThresholdsColors && updateThresholdsAudios
+        const defaultMaxIndex = defaultSettings[type].length
+
+        if (replaceAll) {
+          merge(this.$store.state[this.paneId][type], presetData[type])
+          continue
+        }
+
+        let previousAmount = this.$store.state[this.paneId][type][0].amount
+
+        this.$store.state[this.paneId][type] = merge(this.$store.state[this.paneId][type], presetData[type]).map((threshold, index) => {
+          if (!threshold.id) {
+            threshold = randomString()
+          }
+          if (typeof threshold.amount === 'undefined') {
+            threshold.amount = previousAmount
+          }
+          if (typeof threshold.buyColor === 'undefined') {
+            threshold.buyColor = defaultSettings[type][Math.min(index, defaultMaxIndex)].buyColor
+            threshold.sellColor = defaultSettings[type][Math.min(index, defaultMaxIndex)].sellColor
+          }
+          if (typeof threshold.buyAudio === 'undefined') {
+            threshold.buyAudio = defaultSettings[type][Math.min(index, defaultMaxIndex)].buyAudio
+            threshold.sellAudio = defaultSettings[type][Math.min(index, defaultMaxIndex)].sellAudio
           }
 
-          if (!this.$store.state[this.paneId].thresholds[key]) {
-            presetData[key].id = randomString()
-            if (typeof presetData[key].amount === 'undefined') {
-              presetData[key].amount = previousAmount
-            }
-            if (typeof presetData[key].buyColor === 'undefined') {
-              presetData[key].buyColor = 'rgb(0, 255, 0)'
-              presetData[key].sellColor = 'rgb(255, 0, 0)'
-            }
-            if (typeof presetData[key].buyAudio === 'undefined') {
-              presetData[key].buyAudio = ''
-              presetData[key].sellAudio = ''
-            }
-          } else {
-            previousAmount = this.$store.state[this.paneId].thresholds[key].amount
-          }
+          previousAmount = threshold.amount
 
-          arr.push(presetData[key])
-
-          return arr
-        }, []),
-
-        liquidations: presetData.liquidations
+          return threshold
+        })
       }
     } else {
-      state = {
+      updateThresholdsAmounts = updateThresholdsColors = updateThresholdsAudios = true
+
+      merge(this.$store.state[this.paneId], {
         thresholds: defaultSettings.thresholds,
         liquidations: defaultSettings.liquidations
-      }
-    }
-
-    merge(this.$store.state[this.paneId], state)
-
-    if (state.thresholds.length) {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
-        id: null,
-        amount: null
       })
     }
 
-    if (state.liquidations) {
-      if (typeof state.liquidations.buyAudio !== 'undefined') {
-        this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
-          id: 'liquidations',
-          buyAudio: state.liquidations.buyAudio,
-          sellAudio: state.liquidations.sellAudio
-        })
-      }
+    const referenceThreshold = this.$store.state[this.paneId].thresholds[0]
 
-      if (typeof state.liquidations.buyColor !== 'undefined') {
-        this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
-          id: 'liquidations',
-          side: 'buyColor',
-          value: state.liquidations.buyColor
-        })
-      }
+    if (updateThresholdsAmounts) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
+        id: referenceThreshold.id,
+        amount: referenceThreshold.amount
+      })
+    }
 
-      if (typeof state.liquidations.amount !== 'undefined') {
-        this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
-          id: 'liquidations',
-          value: state.liquidations.amount
-        })
-      }
+    if (updateThresholdsColors) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLORS', {
+        id: referenceThreshold.id,
+        side: 'buy',
+        value: referenceThreshold.buyColor
+      })
+    }
+
+    if (updateThresholdsAudios) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
+        id: referenceThreshold.id,
+        buyAudio: referenceThreshold.buyAudio,
+        sellAudio: referenceThreshold.sellAudio
+      })
     }
   }
 }
