@@ -1,9 +1,7 @@
 <template>
-  <div class="pane-trades hide-scrollbar" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos }">
+  <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos }">
     <pane-header :paneId="paneId" />
-    <table>
-      <tbody ref="tradesContainer"></tbody>
-    </table>
+    <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <trades-placeholder v-if="showPlaceholder" :paneId="paneId"></trades-placeholder>
   </div>
 </template>
@@ -142,15 +140,17 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'app/EXCHANGE_UPDATED':
         case 'settings/TOGGLE_SLIPPAGE':
-        case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
         case this.paneId + '/TOGGLE_TRADE_TYPE':
+        case this.paneId + '/TOGGLE_TRADES_PAIRS':
           this.cachePreferences()
+          this.refreshList()
           break
         case this.paneId + '/SET_MAX_ROWS':
           this.trimRows()
           break
         case 'panes/SET_PANE_MARKETS':
-          if (mutation.payload.id === this.paneId) {
+        case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
+          if (mutation.type !== 'panes/SET_PANE_MARKETS' || mutation.payload.id === this.paneId) {
             this.cachePaneMarkets()
             this.refreshList()
           }
@@ -265,7 +265,7 @@ export default class extends Mixins(PaneMixin) {
 
       const trade = trades[i]
 
-      if (this._preferences.marketsMultipliers[identifier]) {
+      if (typeof this._preferences.marketsMultipliers[identifier] !== 'undefined') {
         trade.amount /= this._preferences.marketsMultipliers[identifier]
       }
 
@@ -395,17 +395,17 @@ export default class extends Mixins(PaneMixin) {
     let pairName = ''
 
     if (this._preferences.showTradesPairs) {
-      pairName = `<td class="trade__pair">${trade.pair.replace('_', ' ')}</td>`
+      pairName = `<div class="trade__pair">${trade.pair.replace('_', ' ')}</div>`
     }
 
-    return `<tr class="trade -${trade.exchange} -${trade.side} -level-${level}${trade.liquidation ? ' -liquidation' : ''}${
-      colorStep[trade.side].gif ? ' -gif' : ''
-    }" title="${trade.exchange}:${trade.pair}" style="${this.getTradeInlineStyles(trade, colorStep, significantAmount)}">
-    <td class="trade__side${sideClass}"></td>
-    <td class="trade__exchange">${exchangeName}</td>
+    return `<li class="trade -${trade.exchange} -${trade.side} -level-${level}${trade.liquidation ? ' -liquidation' : ''}" title="${trade.exchange}:${
+      trade.pair
+    }" style="${this.getTradeInlineStyles(trade, colorStep, significantAmount)}">
+    <div class="trade__side${sideClass}"></div>
+    <div class="trade__exchange">${exchangeName}</div>
     ${pairName}
-    <td class="trade__price">${formatPrice(trade.price)}${priceSlippage}</td>
-    <td class="trade__amount">
+    <div class="trade__price">${formatPrice(trade.price)}${priceSlippage}</div>
+    <div class="trade__amount">
       <span class="trade__amount__quote">
         <span class="icon-quote"></span>
         <span>${formatAmount(trade.size * trade.price)}</span>
@@ -414,9 +414,9 @@ export default class extends Mixins(PaneMixin) {
         <span class="icon-base"></span>
         <span>${formatAmount(trade.size)}</span>
       </span>
-    </td>
-    <td class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}"></td>
-    </tr>`
+    </div>
+    <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}"></div>
+    </li>`
   }
 
   async loadGifs() {
@@ -572,8 +572,8 @@ export default class extends Mixins(PaneMixin) {
 
       const multiplier = this.$store.state[this.paneId].multipliers[identifier]
 
-      if (multiplier !== 1) {
-        this._preferences.marketsMultipliers[identifier] = !isNaN(multiplier) ? multiplier : 0
+      if (typeof multiplier !== undefined) {
+        this._preferences.marketsMultipliers[identifier] = multiplier
       }
 
       output[identifier] = true
@@ -603,16 +603,17 @@ export default class extends Mixins(PaneMixin) {
     for (const element of elements) {
       const [exchange, pair] = parseMarket(element.getAttribute('title'))
 
-      const timestamp = element.querySelector('.trade__time').getAttribute('timestamp')
+      const timestamp = element.querySelector('.trade__time').getAttribute('data-timestamp')
       const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
-
+      const amount = size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
       const trade: Trade = {
         timestamp: (timestamp as unknown) as number,
         exchange,
         pair,
         price,
+        amount,
         size,
         side
       }
@@ -623,8 +624,6 @@ export default class extends Mixins(PaneMixin) {
 
       trades.push(trade)
     }
-
-    trades.reverse()
 
     this.clearList()
 
@@ -651,24 +650,18 @@ export default class extends Mixins(PaneMixin) {
 <style lang="scss">
 .pane-trades {
   font-weight: 400;
-  overflow: auto;
-  max-height: 100%;
-
-  table {
-    border: 0;
-    border-collapse: collapse;
+  ul {
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    max-height: 100%;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     scrollbar-width: none;
-    line-height: 1;
-    white-space: nowrap;
-
-    td {
-      overflow: hidden;
-    }
   }
 
   &.-large {
     font-weight: 500;
-
     .trade {
       padding-top: 3px;
       padding-bottom: 5px;
@@ -677,14 +670,20 @@ export default class extends Mixins(PaneMixin) {
 
   &.-logos {
     .trade__exchange {
-      width: 2em;
-      max-width: 2em;
+      overflow: visible;
       text-align: center;
+      margin: 0;
+      padding: 0;
+      font-size: 100%;
+      flex-grow: 0;
+      max-width: 7%;
+      flex-basis: 7%;
 
       &:before {
         font-family: 'icon';
+        display: inline-block;
+        vertical-align: -2px;
         font-weight: 400;
-        font-size: 134%;
       }
     }
 
@@ -696,9 +695,8 @@ export default class extends Mixins(PaneMixin) {
 
     &.-logos-colors {
       .trade__exchange {
-        background-repeat: no-repeat;
+        height: 1em;
         background-position: center;
-        background-size: 60%;
 
         &:before {
           display: none;
@@ -725,8 +723,14 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .trade {
-  padding: 1px 0 3px;
+  display: flex;
+  flex-flow: row nowrap;
+  background-position: center center;
+  background-size: cover;
+  background-blend-mode: overlay;
   position: relative;
+  align-items: center;
+  padding: 1px 0 3px;
 
   &:after {
     content: '';
@@ -737,30 +741,132 @@ export default class extends Mixins(PaneMixin) {
     bottom: 0;
     opacity: 0;
     background-color: white;
-    animation: 0.5s highlight;
+    animation: 1s $ease-out-expo highlight;
     pointer-events: none;
   }
 
-  &__side {
-    width: 10%;
+  &.-empty {
+    justify-content: center;
+    padding: 1em;
+
+    &:after {
+      display: none;
+    }
+  }
+
+  &.-liquidation {
+    .icon-side {
+      font-weight: 400;
+
+      &:after {
+        margin-left: 1rem;
+      }
+    }
+
+    &.-buy .icon-side:before {
+      content: unicode($icon-bear);
+    }
+
+    &.-sell .icon-side:before {
+      content: unicode($icon-bull);
+    }
+  }
+
+  &.-sell {
+    background-color: lighten($red, 35%);
+    color: $red;
+
+    .icon-side:before {
+      content: unicode($icon-down);
+    }
+  }
+
+  &.-buy {
+    background-color: lighten($green, 50%);
+    color: $green;
+
+    .icon-side:before {
+      content: unicode($icon-up);
+    }
+  }
+
+  &.-level-0 {
+    height: 1.5em;
+    font-size: 0.875em;
+  }
+
+  &.-level-1 {
+    height: 1.5em;
+    font-size: 1em;
+  }
+
+  &.-level-2 {
+    height: 1.625em;
+    font-size: 1.125em;
+  }
+
+  &.-level-3 {
+    height: 2em;
+    box-shadow: 0 0 20px rgba(black, 0.5);
+    z-index: 1;
+    font-size: 1.25em;
+  }
+
+  > div {
+    flex-basis: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .trade__side {
+    overflow: visible;
+    flex-grow: 0;
     max-width: 10%;
-    font-weight: 600;
+    flex-basis: 10%;
     text-align: center;
   }
 
-  &__exchange,
-  &__pair {
-    overflow: hidden;
-    width: 20%;
-    max-width: 20%;
-    font-size: 68.75%;
-    white-space: normal;
-    line-height: 0.9;
+  .icon-side {
+    font-family: 'icon';
+    font-weight: 600;
+
+    &:before {
+      display: inline-block;
+      vertical-align: -2px;
+    }
   }
 
-  &__price {
-    width: 30%;
-    max-width: 30%;
+  .trade__pair {
+    text-align: left;
+    flex-grow: 0.4;
+    font-size: 75%;
+    line-height: 1;
+
+    + .trade__price {
+      flex-grow: 0.5;
+    }
+  }
+
+  .icon-currency,
+  .icon-quote,
+  .icon-base {
+    line-height: 0;
+  }
+
+  .trade__exchange {
+    background-repeat: no-repeat;
+    white-space: normal;
+    word-break: inherit;
+    font-size: 75%;
+    line-height: 1;
+    text-align: left;
+    flex-grow: 0.4;
+  }
+
+  .trade__price {
+    flex-grow: 0.6;
+    margin-left: 4%;
 
     small {
       font-size: 0.75em;
@@ -772,22 +878,11 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  &__time {
-    text-align: right;
-    padding-right: 0.5em;
-    position: absolute;
-    padding-right: 0.5em;
-    overflow: visible;
-    right: 0;
-    line-height: 1.4;
-  }
-
-  &__amount {
+  .trade__amount {
+    text-align: left;
+    position: relative;
+    flex-grow: 0.5;
     padding: 0 1px;
-    max-width: 33%;
-    min-width: 1px;
-    overflow: hidden;
-    text-overflow: ellipsis;
 
     .trade__amount__base {
       display: none;
@@ -804,66 +899,13 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  &.-gif {
-    background-position: center center;
-    background-size: cover;
-    background-blend-mode: overlay;
-  }
-
-  &.-liquidation {
-    .icon-side {
-      font-weight: 400;
-    }
-
-    &.-buy .icon-side:before {
-      content: unicode($icon-bear);
-    }
-
-    &.-sell .icon-side:before {
-      content: unicode($icon-bull);
-    }
-  }
-
-  &.-sell .icon-side:before {
-    content: unicode($icon-down);
-  }
-
-  &.-buy .icon-side:before {
-    content: unicode($icon-up);
-  }
-
-  &.-level-0 {
-    height: 1.5em;
-    font-size: 0.875em;
-  }
-
-  &.-level-1 {
-    height: 1.5em;
-    font-size: 1em;
-    font-weight: 500;
-  }
-
-  &.-level-2 {
-    height: 1.6em;
-    font-size: 1.2em;
-  }
-
-  &.-level-3 {
-    height: 2em;
-    box-shadow: 0 0 20px rgba(black, 0.5);
-    z-index: 1;
-    font-size: 1.25em;
-    font-weight: 600;
-  }
-
-  .icon-side {
-    font-family: 'icon';
-  }
-
-  .icon-currency,
-  .icon-quote,
-  .icon-base {
-    line-height: 0;
+  .trade__time {
+    text-align: right;
+    flex-grow: 0;
+    overflow: visible;
+    max-width: 9%;
+    flex-basis: 9%;
+    margin-right: 3%;
   }
 }
 

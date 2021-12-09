@@ -271,8 +271,13 @@ const mutations = {
     }
   },
   SET_THRESHOLD_MULTIPLIER(state, { identifier, multiplier }: { identifier: string; multiplier: number }) {
-    if (isNaN(multiplier) || multiplier < 0) {
-      multiplier = 0
+    if (multiplier === null || isNaN(multiplier) || multiplier < 0) {
+      Vue.delete(state.multipliers, identifier)
+      return
+    }
+
+    if (multiplier === 0) {
+      multiplier = 0.01
     }
 
     Vue.set(state.multipliers, identifier, multiplier)

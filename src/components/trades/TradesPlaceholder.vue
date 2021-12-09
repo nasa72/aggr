@@ -119,6 +119,8 @@ export default class extends Vue {
 
   pre {
     font-size: 0.75em;
+    pointer-events: all;
+    user-select: text;
   }
 }
 </style>

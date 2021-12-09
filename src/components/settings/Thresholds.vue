@@ -279,10 +279,6 @@ export default class extends Vue {
     return this.$store.state[this.paneId].showThresholdsAsTable
   }
 
-  get preferQuoteCurrencySize() {
-    return this.$store.state.settings.preferQuoteCurrencySize
-  }
-
   get useAudio() {
     return this.$store.state.settings.useAudio
   }

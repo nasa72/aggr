@@ -200,7 +200,10 @@
     <section class="section">
       <div class="form-group" v-if="sections.indexOf('multipliers') > -1">
         <label>
-          Ajust threshold of specific markets
+          <div class="d-flex">
+            <div>Decrease threshold<br /><small>Increase visibility</small></div>
+            <div class="text-right mlauto">Increase threshold<br /><small>Decrease visibility</small></div>
+          </div>
         </label>
         <div class="multipliers" v-if="multipliers.length">
           <div
@@ -211,7 +214,7 @@
           >
             <div
               class="multipliers-market__id"
-              @dblclick="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
+              @dblclick="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: null })"
             >
               <div class="text-nowrap market-exchange">
                 <small>{{ market.exchange }}</small>
@@ -224,7 +227,7 @@
               <slider
                 style="width: 100%;min-width:150px;"
                 :min="0"
-                :max="10"
+                :max="2"
                 :label="market.multiplier !== 1"
                 :step="0.01"
                 :showCompletion="false"
