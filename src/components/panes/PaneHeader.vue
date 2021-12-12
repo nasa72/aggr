@@ -179,7 +179,7 @@ export default class extends Vue {
   }
 
   maximizePane(event) {
-    if (event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
+    if (event.type === 'dblclick' && event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
       return
     }
 
