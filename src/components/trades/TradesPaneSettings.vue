@@ -114,7 +114,7 @@
           </p>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }}) <i class="icon-up"></i></div>
+      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }}) <i class="icon-up-thin"></i></div>
     </section>
 
     <section class="section">
@@ -194,7 +194,7 @@
           </p>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('audio')">Audio <i class="icon-up"></i></div>
+      <div class="section__title" @click="toggleSection('audio')">Audio <i class="icon-up-thin"></i></div>
     </section>
 
     <section class="section">
@@ -253,7 +253,7 @@
 
       <div class="section__title" @click="toggleSection('multipliers')">
         THRESHOLD MULTIPLIER ({{ mutipliersCount }})
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
   </div>
@@ -460,7 +460,6 @@ export default class extends Vue {
           thresholds: Object.values(presetData),
           liquidations: liquidationsThreshold ? [liquidationsThreshold] : null
         }
-        debugger
       }
 
       for (const type of ['thresholds', 'liquidations']) {

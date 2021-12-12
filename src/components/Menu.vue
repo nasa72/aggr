@@ -4,9 +4,6 @@
       <i class="icon-menu"></i>
     </button>
     <div class="menu__actions" v-if="open" @click="onClickItem">
-      <button v-if="isDevelopment" class="menu-action btn" type="button" @click="toggleWorker">
-        {{ paused ? 'Resume' : 'Pause' }}
-      </button>
       <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
@@ -58,7 +55,6 @@
 </template>
 
 <script lang="ts">
-import aggregatorService from '@/services/aggregatorService'
 import dialogService from '@/services/dialogService'
 import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
@@ -72,10 +68,8 @@ import SettingsDialog from './settings/SettingsDialog.vue'
   }
 })
 export default class extends Vue {
-  isDevelopment = process.env.NODE_ENV !== 'production'
   isFullscreen = false
   open = false
-  paused = false
   paneTypes = {
     chart: {
       title: 'Chart',
@@ -150,26 +144,6 @@ export default class extends Vue {
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
-  }
-
-  toggleWorker() {
-    let noticeMessage
-
-    if (this.paused) {
-      aggregatorService.worker.addEventListener('message', aggregatorService.workerHandler)
-
-      noticeMessage = 'app connected to worker'
-    } else {
-      aggregatorService.worker.removeEventListener('message', aggregatorService.workerHandler)
-
-      noticeMessage = 'app successfully disconnected from worker'
-    }
-
-    this.$store.dispatch('app/showNotice', {
-      title: noticeMessage
-    })
-
-    this.paused = !this.paused
   }
 
   onClickItem(event) {

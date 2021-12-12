@@ -33,14 +33,14 @@
     </ul>
 
     <footer>
-      <dropdown class="-left -text-left" :options="menu" selectionClass="-blue -large mrauto" placeholder="Options">
-        <template v-slot:selection>Options</template>
+      <dropdown class="-left -text-left" :options="menu" selectionClass="-text -large mrauto" placeholder="Options">
+        <template v-slot:selection>Manage preset</template>
         <template v-slot:option="{ value }">
           <i :class="[value.icon === 'trash' && 'text-danger', 'icon-' + value.icon]"> </i>
           <span :class="value.icon === 'trash' ? 'text-danger' : ''">{{ value.label }}</span>
         </template>
       </dropdown>
-      <button type="button" class="btn -blue -large ml16 mlauto" @click="replacePreset"><i class="icon-edit mr4"></i> Set</button>
+      <button type="button" class="btn -blue -large ml16 mlauto" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
     </footer>
   </Dialog>
 </template>
@@ -63,7 +63,7 @@ export default {
       menu: [
         {
           icon: 'swap',
-          label: 'Replace preset',
+          label: 'Override',
           click: this.replacePreset
         },
         {
@@ -73,7 +73,7 @@ export default {
         },
         {
           icon: 'trash',
-          label: 'Delete preset',
+          label: 'Delete',
           click: this.deletePreset
         }
       ],

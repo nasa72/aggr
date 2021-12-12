@@ -47,6 +47,9 @@ export const databaseUpgrades = {
     db.createObjectStore('sounds', {
       keyPath: 'name'
     })
+    db.createObjectStore('colors', {
+      autoIncrement: true
+    })
   }
 }
 

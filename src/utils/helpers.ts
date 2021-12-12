@@ -36,8 +36,6 @@ export function formatPrice(price) {
 
   if (store.state.settings.decimalPrecision) {
     return price.toFixed(store.state.settings.decimalPrecision)
-  } else if (store.state.app.optimalDecimal) {
-    return price.toFixed(store.state.app.optimalDecimal)
   } else {
     return price.toFixed(2)
   }
@@ -120,12 +118,6 @@ export function uniqueName(name, names) {
   return name
 }
 
-export function formatTime(time) {
-  const date = new Date(time * 1000)
-
-  return date.getDate() + '/' + (date.getMonth() + 1) + ' ' + date.toTimeString().split(' ')[0]
-}
-
 export const deepSet = (object, path, value) => {
   if (path.length === 1) object[path[0]] = value
   else if (path.length === 0) throw 'error'
@@ -169,22 +161,6 @@ export function sleep(duration = 1000): Promise<void> {
   return new Promise(resolve => {
     setTimeout(() => resolve(), duration)
   })
-}
-
-export function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
-export function getErrorMessage(error: Error | string) {
-  let errorMessage = 'Something wrong happened.'
-
-  if (error instanceof Error) {
-    errorMessage = error.message
-  } else if (typeof error === 'string') {
-    errorMessage = error
-  }
-
-  return errorMessage
 }
 
 export function getBucketId(markets: string[]) {
@@ -267,43 +243,6 @@ export function formatBytes(bytes, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
-}
-
-export function getDiff(obj, model) {
-  if (typeof model === 'undefined' || typeof obj === 'undefined') {
-    return obj
-  }
-
-  const isArray = Array.isArray(obj)
-
-  for (const prop in obj) {
-    if (Array.isArray(obj) && obj[prop] && model[prop] && obj[prop].id !== model[prop].id) {
-      continue
-    }
-
-    if (!isArray && prop !== '_id' && obj[prop] === model[prop]) {
-      delete obj[prop]
-      continue
-    }
-
-    if (obj[prop] && typeof obj[prop] === 'object') {
-      obj[prop] = getDiff(obj[prop], model[prop])
-    }
-  }
-
-  return obj
-}
-
-export function isElementInteractive(el: HTMLElement) {
-  while (el) {
-    if (el.tagName === 'A' || el.tagName === 'BUTTON') {
-      return true
-    }
-
-    el = el.parentElement
-  }
-
-  return false
 }
 
 export function fallbackCopyTextToClipboard(text) {
@@ -406,4 +345,15 @@ export function floorTimestampToTimeframe(timestamp: number, timeframe: number, 
   } else {
     return Math.floor(timestamp / timeframe) * timeframe
   }
+}
+
+export function parseVersion(version: string): number {
+  if (!version) {
+    return 0
+  }
+
+  return +version
+    .split('.')
+    .map(n => n.padStart(2, '0'))
+    .join('')
 }

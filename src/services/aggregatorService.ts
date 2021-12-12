@@ -9,21 +9,17 @@ import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
   public worker: Worker
-  public workerHandler: (ev: MessageEvent) => any
 
   constructor() {
     super()
 
     this.worker = new Worker()
-    this.workerHandler = this.transmit.bind(this)
 
-    this.worker.addEventListener('message', this.workerHandler)
+    this.worker.addEventListener('message', event => {
+      this.emit(event.data.op, event.data.data, event.data.trackingId)
+    })
 
     this.listenUtilityEvents()
-  }
-
-  transmit(event: MessageEvent) {
-    this.emit(event.data.op, event.data.data, event.data.trackingId)
   }
 
   dispatch(payload: AggregatorPayload) {

@@ -37,7 +37,7 @@
           <label>Import indicator</label>
           <button class="btn -blue -large -cases w-100 -file">
             <i class="icon-upload mr8"></i> Browse
-            <input type="file" accept="application/JSON" @change="handleFile" />
+            <input type="file" accept="application/json" @change="handleFile" />
           </button>
           <div class="divider -horizontal" style="display:flex;">Or</div>
           <label>Create blank indicator</label>
@@ -99,9 +99,7 @@ export default {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
     filteredIndicators: function() {
-      return this.indicators.filter(
-        a => !this.$store.state[this.paneId].indicators[a.id] && (this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
-      )
+      return this.indicators.filter(a => this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
     },
     availableScales: function() {
       return this.indicators
@@ -193,8 +191,6 @@ export default {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)
-
-        this.getIndicatorId()
       }
     },
     ago(timestamp) {

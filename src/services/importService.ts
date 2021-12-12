@@ -1,23 +1,30 @@
-import { Preset, Workspace } from '@/types/test'
+import { Preset } from '@/types/test'
 import dialogService from './dialogService'
 import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
+import IndicatorDialog from '../components/chart/IndicatorDialog.vue'
 import store from '@/store'
+import { slugify } from '../utils/helpers'
+import { IndicatorSettings } from '../store/panesSettings/chart'
 
 class ImportService {
   getJSON(file: File) {
-    return new Promise<any>(resolve => {
+    return new Promise<any>((resolve, reject) => {
       const reader = new FileReader()
 
-      reader.onload = async event => {
+      reader.onload = event => {
         try {
-          resolve(JSON.parse(event.target.result as string))
+          const json = JSON.parse(event.target.result as string)
+
+          resolve(json)
         } catch (error) {
-          throw new Error('Unable to read file')
+          reject(error)
         }
       }
 
       reader.readAsText(file)
+    }).catch(() => {
+      throw new Error('Unable to read file')
     })
   }
 
@@ -54,7 +61,7 @@ class ImportService {
       throw new Error('Preset is empty')
     }
 
-    if (preset.type !== presetType) {
+    if (presetType && preset.type !== presetType) {
       throw new Error('Preset is not ' + presetType + ' type')
     }
 
@@ -69,19 +76,7 @@ class ImportService {
   }
 
   async importWorkspace(file: File) {
-    const workspace: Workspace = await new Promise(resolve => {
-      const reader = new FileReader()
-
-      reader.onload = async event => {
-        try {
-          resolve(JSON.parse(event.target.result as string))
-        } catch (error) {
-          throw new Error('Unable to read file')
-        }
-      }
-
-      reader.readAsText(file)
-    })
+    const workspace = await this.getJSON(file)
 
     if (!workspace.id || !workspace.name || !workspace.states) {
       throw new Error('Unrecognized workspace file')
@@ -126,6 +121,60 @@ class ImportService {
     }
 
     return null
+  }
+
+  importIndicator(json) {
+    let chartPaneId
+
+    if (store.state.app.focusedPaneId && store.state.panes.panes[store.state.app.focusedPaneId].type === 'chart') {
+      chartPaneId = store.state.app.focusedPaneId
+    } else {
+      for (const id in store.state.panes.panes) {
+        if (store.state.panes.panes[id].type === 'chart') {
+          chartPaneId = id
+          break
+        }
+      }
+    }
+
+    if (!chartPaneId) {
+      throw new Error('No chart found')
+    }
+
+    const name = json.name
+      .split(':')
+      .slice(1)
+      .join(':')
+
+    const indicator: IndicatorSettings = {
+      id: slugify(name),
+      name: name,
+      script: json.data.script || '',
+      options: json.data.options || {},
+      unsavedChanges: true
+    }
+
+    store.dispatch(chartPaneId + '/addIndicator', indicator)
+
+    dialogService.open(IndicatorDialog, { paneId: chartPaneId, indicatorId: indicator.id }, 'indicator')
+  }
+
+  async importAnything(file: File) {
+    if (file.type === 'application/json') {
+      const json = await this.getJSON(file)
+
+      if (json.type && json.data) {
+        if (json.type === 'indicator') {
+          this.importIndicator(json)
+        } else {
+          await this.importPreset(file)
+        }
+      } else {
+        await this.importWorkspace(file)
+      }
+    } else if (/^audio\//.test(file.type)) {
+      await this.importSound(file)
+    }
   }
 }
 

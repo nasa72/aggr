@@ -281,13 +281,16 @@ export default class extends Vue {
       return
     }
 
-    try {
-      await importService.importWorkspace(event.dataTransfer.files[0])
-    } catch (error) {
-      this.$store.dispatch('app/showNotice', {
-        title: error.message,
-        type: 'error'
-      })
+    for (const file of event.dataTransfer.files) {
+      try {
+        await importService.importAnything(file)
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: error.message,
+          type: 'error',
+          timeout: 60000
+        })
+      }
     }
   }
   refreshMainMarkets(markets) {

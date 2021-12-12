@@ -90,7 +90,7 @@ const actions = {
       window.scrollTo(0, document.body.scrollHeight)
     })
   },
-  async removePane({ commit, state, dispatch }, id: string) {
+  async removePane({ commit, state, dispatch, rootState }, id: string) {
     const item = state.panes[id]
 
     if (!item) {
@@ -100,6 +100,10 @@ const actions = {
     dispatch('removePaneGridItems', id)
     commit('REMOVE_PANE', id)
     dispatch('refreshMarketsListeners')
+
+    if (rootState.app.focusedPaneId === id) {
+      this.commit('app/SET_FOCUSED_PANE', null)
+    }
 
     await workspacesService.removeState(id)
 
@@ -225,7 +229,7 @@ const actions = {
       }
     }
 
-    //await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
+    await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
 
     aggregatorService.dispatch({
       op: 'updateBuckets',

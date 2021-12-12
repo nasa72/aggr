@@ -376,8 +376,6 @@ input[type='range'] {
 [contenteditable] {
   display: inline-block;
   cursor: text;
-  color: lighten($green, 20%);
-  cursor: text;
   font-family: $font-monospace;
 
   -webkit-touch-callout: auto;
@@ -479,10 +477,6 @@ textarea.form-control {
 #app.-light {
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
-  }
-
-  [contenteditable] {
-    color: black;
   }
 }
 

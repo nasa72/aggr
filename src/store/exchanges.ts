@@ -19,7 +19,7 @@ const state = supportedExchanges.reduce(
       fetched: false
     }
 
-    if (/HITBTC|PHEMEX|BINANCE_US|SERUM/.test(id)) {
+    if (/HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI/.test(id)) {
       exchangesState[id].disabled = true
     }
 

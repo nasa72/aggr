@@ -104,6 +104,7 @@ export interface Preset {
   data: any
   createdAt: number
   updatedAt: number
+  version?: string
 }
 
 export interface ImportedSound {

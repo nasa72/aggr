@@ -9,7 +9,7 @@
     @click="toggleExchange"
   >
     <div class="settings-exchange__header">
-      <div class="settings-exchange__identity" :title="'Toggle ' + id" v-tippy>
+      <div class="settings-exchange__identity" :title="settings.disabled ? 'Enable ' + id : 'Disable ' + id" v-tippy>
         <div class="settings-exchange__name">{{ name }}</div>
       </div>
       <div class="settings-exchange__controls">
@@ -106,7 +106,7 @@ export default class extends Vue {
 
 <style lang="scss">
 .settings-exchange {
-  background-color: rgba(white, 0.15);
+  background-color: var(--theme-background-o75);
   transition: all 0.2s $ease-out-expo;
   border-radius: 3px;
   margin-bottom: 8px;
@@ -165,7 +165,7 @@ export default class extends Vue {
 
   &.-expanded {
     .settings-exchange__more i:before {
-      content: unicode($icon-up);
+      content: unicode($icon-up-thin);
     }
   }
 }
@@ -201,7 +201,7 @@ export default class extends Vue {
     position: absolute;
     top: calc(50% + 1px);
     height: 1px;
-    background-color: white;
+    background-color: currentColor;
     transition: width 0.2s $ease-out-expo 0.2s;
     left: -2px;
     width: calc(100% + 4px);
@@ -238,7 +238,7 @@ export default class extends Vue {
     width: 0px;
     height: 0px;
 
-    background-color: #fff;
+    background-color: var(--theme-color-base);
     border-radius: 50%;
     animation: circle-scaleout 1s infinite ease-in-out;
     transition: all 0.2s $ease-elastic, visibility 0.2s linear 0.2s;
@@ -284,8 +284,8 @@ export default class extends Vue {
     display: flex;
     align-items: center;
 
-    .icon-down,
-    .icon-up {
+    .icon-down-thin,
+    .icon-up-thin {
       font-size: 80%;
     }
 

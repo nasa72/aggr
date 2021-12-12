@@ -69,7 +69,7 @@
 
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
         Workspaces
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -120,7 +120,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
         Trades
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -128,7 +128,7 @@
       <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
         Audio
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -165,7 +165,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
         Chart
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -177,7 +177,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
         Exchanges
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -185,7 +185,7 @@
       <other-settings v-if="settings.indexOf('other') > -1"></other-settings>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')">
         Other
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -356,7 +356,7 @@ export default {
     },
 
     async getWorkspaces() {
-      const workspaces = await workspacesService.getWorkspaces()
+      const workspaces = (await workspacesService.getWorkspaces()).filter(workspace => workspace.id !== workspacesService.workspace.id)
 
       this.workspaces = workspaces
 
@@ -443,20 +443,19 @@ export default {
     },
 
     async uploadWorkspace() {
-      const file = await browseFile()
-
-      if (!file) {
-        return
-      }
-
       try {
-        await workspacesService.addAndSetWorkspace(await importService.importWorkspace(file), true)
+        const file = await browseFile()
 
-        this.getWorkspaces()
+        if (!file) {
+          return
+        }
+
+        await importService.importWorkspace(file)
       } catch (error) {
         this.$store.dispatch('app/showNotice', {
           title: error.message,
-          type: 'error'
+          type: 'error',
+          timeout: 60000
         })
       }
     },
@@ -477,10 +476,10 @@ export default {
     async reset() {
       if (
         await dialogService.confirm({
-          title: 'Reset ?',
-          message: `This will remove your <strong>${this.workspaces.length} workspace${
+          title: 'Reset everything ?',
+          message: `<strong>${this.workspaces.length + 1} workspace${
             this.workspaces.length > 1 ? 's' : ''
-          }</strong>.<br>All associated data will be lost forever.`
+          }</strong> will be deleted along with all presets, indicators & imported sounds.`
         })
       ) {
         await workspacesService.reset()

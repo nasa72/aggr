@@ -12,10 +12,6 @@ import aggregatorService from '@/services/aggregatorService'
 
 Vue.use(Vuex)
 
-/* console.debug = function() {
-  //
-} */
-
 export interface AppModuleTree<R> {
   [key: string]: Module<any, R>
 }
@@ -32,8 +28,6 @@ const modules = { app, settings, exchanges, panes } as AppModuleTree<ModulesStat
 
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
-
-  // console.debug(`[store] ${mutation.type}`)
 
   if (state[moduleId] && state[moduleId]._id) {
     scheduleSync(state[moduleId])

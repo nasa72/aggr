@@ -2,10 +2,10 @@
   <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green -arrow">
     <template v-slot:option-custom>
       <div class="column" @mousedown.prevent>
-        <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
+        <div class="btn -green" @click="savePreset()"><i class="icon-plus"></i></div>
         <div class="btn -blue -file">
           <i class="icon-upload"></i>
-          <input type="file" accept="application/JSON" @change="handleFile" />
+          <input type="file" accept="application/json" @change="handleFile" />
         </div>
         <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
       </div>
@@ -15,7 +15,7 @@
 
       <span class="mr4">{{ value.label }}</span>
 
-      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
+      <button type="button" class="dropdown-option__action btn -green -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
         <i class="icon-edit"></i>
       </button>
     </template>
@@ -100,6 +100,8 @@ export default class extends Vue {
   }
 
   async savePreset(name?: string) {
+    const isOverride = !!name
+
     if (!name || typeof name !== 'string') {
       name = await dialogService.prompt('Enter a name')
     } else if (!(await dialogService.confirm(`Override preset ${name} with current settings ?`))) {
@@ -115,7 +117,7 @@ export default class extends Vue {
     if (!data) {
       this.$store.dispatch('app/showNotice', {
         type: 'error',
-        title: `Preset should contain data. Not saving this preset.`
+        title: isOverride ? `Canceled preset override` : `Canceled preset creation`
       })
 
       return
@@ -168,7 +170,7 @@ export default class extends Vue {
     }
 
     try {
-      if (await importService.importPreset(file)) {
+      if (await importService.importPreset(file, this.type)) {
         await this.getPresets()
       }
     } catch (error) {

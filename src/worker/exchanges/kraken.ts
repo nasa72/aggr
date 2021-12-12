@@ -29,7 +29,7 @@ export default class extends Exchange {
 
           const pair = product.symbol.toUpperCase()
 
-          specs[pair] = product.contractSizconsole.error()
+          specs[pair] = product.contractSize
 
           products.push(pair)
         }

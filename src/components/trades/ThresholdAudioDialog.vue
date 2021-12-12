@@ -13,7 +13,7 @@
       <p class="help-text mx0 -center">
         <i class="icon-info mr4"></i><span v-text="`Play a song when a ${formatAmount(this.min)} - ${formatAmount(this.max)} trade occur.`"></span>
       </p>
-      <button class="btn -text mlauto" @click="showHelp = !showHelp"><i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help</button>
+      <button class="btn -text mlauto" @click="showHelp = !showHelp">help</button>
     </div>
     <div class="help-block mb16" v-if="showHelp">
       Write a sequence of sounds using the play() or playurl() function
@@ -78,7 +78,13 @@
           spellcheck="false"
           @focus="focusedSide = 'buy'"
         ></textarea>
-        <button class="btn -green ml8" @click="testCustom('buy', $event)" @dblclick="doTheLoop('buy')" title="Custom">
+        <button
+          class="btn -green ml8"
+          :class="[loopingSide === 'buy' && 'shake-hard']"
+          @click="testCustom('buy', $event)"
+          @dblclick="loopSide('buy')"
+          title="Custom"
+        >
           <i class="icon-volume-high"></i>
         </button>
       </div>
@@ -109,7 +115,12 @@
           spellcheck="false"
           @focus="focusedSide = 'sell'"
         ></textarea>
-        <button class="btn -red ml8" @click="testCustom('sell', $event)" @dblclick="doTheLoop('sell')">
+        <button
+          class="btn -red ml8"
+          :class="[loopingSide === 'sell' && 'shake-hard']"
+          @click="testCustom('sell', $event)"
+          @dblclick="loopSide('sell')"
+        >
           <i class="icon-volume-high"></i>
         </button>
       </div>
@@ -160,7 +171,8 @@ export default {
     buyError: null,
     sellError: null,
     showHelp: false,
-    focusedSide: null
+    focusedSide: null,
+    loopingSide: null
   }),
   computed: {
     threshold: function() {
@@ -199,9 +211,9 @@ export default {
     this.$nextTick(() => this.initBehave())
   },
   beforeDestroy() {
-    if (this.looping) {
-      clearTimeout(this.looping)
-      this.looping = false
+    if (this._loopingTimeout) {
+      clearTimeout(this._loopingTimeout)
+      this._loopingTimeout = false
     }
 
     for (const behave of this._behaves) {
@@ -247,9 +259,8 @@ export default {
       return true
     },
     async testCustom(side, event, litteral) {
-      if (this.looping) {
-        clearTimeout(this.looping)
-        this.looping = false
+      if (this._loopingTimeout) {
+        this.stopLoop()
       }
 
       if (!litteral) {
@@ -259,20 +270,32 @@ export default {
       return await this.test(litteral, side, event)
     },
     testOriginal(side, event) {
-      if (this.looping) {
-        clearTimeout(this.looping)
-        this.looping = false
+      if (this._loopingTimeout) {
+        this.stopLoop()
       }
 
       const litteral = this.threshold[side + 'Audio']
 
       this.test(litteral, side, event)
     },
-    doTheLoop(side) {
-      this.looping = setTimeout(() => {
+    stopLoop() {
+      if (!this._loopingTimeout) {
+        return
+      }
+
+      clearTimeout(this._loopingTimeout)
+      this._loopingTimeout = false
+      this.loopingSide = null
+    },
+    loopSide(side) {
+      if (!this._loopingTimeout) {
+        this.loopingSide = side
+      }
+
+      this._loopingTimeout = setTimeout(() => {
         this.test(this.threshold[side + 'Audio'], side)
 
-        this.doTheLoop(side)
+        this.loopSide(side)
       }, Math.random() * 100)
     },
     restartWebAudio() {

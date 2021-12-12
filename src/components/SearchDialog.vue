@@ -57,7 +57,7 @@
               <span>Already connected</span>
             </label>
           </div>
-          <div class="search-filters__title mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up-thin -higher"></i></div>
         </div>
 
         <div class="search-filters mb16">
@@ -93,7 +93,7 @@
               <span>Futures</span>
             </label>
           </div>
-          <div class="search-filters__title mb8" @click="showTypeFilters = !showTypeFilters">Type <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title mb8" @click="showTypeFilters = !showTypeFilters">Type <i class="icon-up-thin -higher"></i></div>
         </div>
 
         <div class="search-filters">
@@ -120,7 +120,7 @@
               </label>
             </template>
           </div>
-          <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up-thin -higher"></i></div>
         </div>
       </div>
       <div class="search__wrapper">
@@ -906,14 +906,14 @@ export default {
     user-select: none;
     display: flex;
 
-    .icon-up {
+    .icon-up-thin {
       transition: transform 0.2s $ease-out-expo;
       line-height: inherit;
       margin-left: auto;
     }
 
     &:first-child {
-      .icon-up {
+      .icon-up-thin {
         display: inline-block;
         transform: rotateZ(180deg);
       }

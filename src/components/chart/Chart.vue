@@ -27,7 +27,7 @@
 
           <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8 "></i> </a>
         </div>
-        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
+        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up-thin -higher"></i></div>
       </div>
 
       <div class="chart-overlay__panel chart__markets">
@@ -53,7 +53,9 @@
             </label>
           </div>
         </div>
-        <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
+        <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
+          Markets <i class="icon-up-thin -higher"></i>
+        </div>
       </div>
     </div>
     <div class="chart-overlay -right chart__controls" :style="{ marginRight: axis[0] + 'px' }">
@@ -1107,12 +1109,12 @@ export default class extends Mixins(PaneMixin) {
       color: var(--theme-color-base);
     }
 
-    .icon-up {
+    .icon-up-thin {
       vertical-align: middle;
     }
 
     &:first-child {
-      .icon-up {
+      .icon-up-thin {
         display: inline-block;
         transform: rotateZ(180deg);
       }

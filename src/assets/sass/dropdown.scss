@@ -24,7 +24,7 @@
 
   &__selected.-arrow {
     &:after {
-      content: unicode($icon-down);
+      content: unicode($icon-down-thin);
       transform: rotateZ(180deg);
       font-family: 'icon';
       padding: 0 0.2em;

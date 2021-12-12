@@ -77,11 +77,19 @@ class HistoricalService extends EventEmitter {
               timeout: 10000
             })
           } else {
-            store.dispatch('app/showNotice', {
-              title: `Aggr server seems down 💀.<br>Please <a href="https://github.com/Tucsky/aggr/issues/new?title=Server%20is%20down&body=Can%20devs%20do%20something%20?">Open a ticket</a> <strong>if the issue persists</strong>.`,
-              type: 'error',
-              timeout: 10000
-            })
+            if (/aggr\.trade$/.test(location.hostname)) {
+              store.dispatch('app/showNotice', {
+                title: `Aggr server seems down 💀.<br>Please <a href="https://github.com/Tucsky/aggr/issues/new?title=Server%20is%20down&body=Can%20devs%20do%20something%20?">Open a ticket</a> <strong>if the issue persists</strong>.`,
+                type: 'error',
+                timeout: 10000
+              })
+            } else {
+              store.dispatch('app/showNotice', {
+                title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
+                type: 'error',
+                timeout: 10000
+              })
+            }
           }
         }
 

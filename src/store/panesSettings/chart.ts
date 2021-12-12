@@ -23,6 +23,7 @@ export interface IndicatorSettings {
   updatedAt?: number
   unsavedChanges?: boolean
   series?: string[]
+  version?: string
 }
 export interface ChartPaneState {
   _id?: string
@@ -100,9 +101,10 @@ const actions = {
 
     state._booted = true
   },
-  addIndicator({ commit }, indicator) {
-    // const ids = Object.keys(state.indicators)
-    // const id = uniqueName(slugify(indicator.name), ids)
+  addIndicator({ state, commit }, indicator) {
+    const ids = Object.keys(state.indicators)
+
+    indicator.id = uniqueName(indicator.id, ids)
 
     indicator = {
       script: 'plotline(avg_close(bar))',

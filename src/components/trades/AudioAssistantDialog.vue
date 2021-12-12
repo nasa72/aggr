@@ -180,7 +180,7 @@
 
       <div class="section__title" @click="showAdvanced = !showAdvanced">
         Advanced
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 

@@ -47,7 +47,7 @@
       <label class="checkbox-control -animations">
         <input type="checkbox" class="form-control" :checked="normalizeWatermarks" @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')" />
         <div></div>
-        <span v-text="normalizeWatermarks ? 'Show normalized watermarks' : 'Show detailed watermark'"></span>
+        <span v-text="normalizeWatermarks ? 'Normalize symbols in watermarks' : 'Detailed watermarks'"></span>
       </label>
     </div>
   </div>

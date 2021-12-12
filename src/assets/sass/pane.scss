@@ -25,7 +25,7 @@
 
       &:before {
         font-family: 'icon';
-        content: $icon-up;
+        content: $icon-up-thin;
         transform: rotateZ(-225deg) scale(1);
         display: block;
         font-size: 2em;
@@ -133,7 +133,7 @@
     background-color: rgba(white, 0.1);
 
     .pane-overlay {
-      background-color: rgba(white, 0.5);
+      background-color: var(--theme-background-o75);
     }
 
     /*.pane-header,

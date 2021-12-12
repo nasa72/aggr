@@ -305,7 +305,7 @@ export default class SerieBuilder {
     const serieOptions: { [key: string]: any } = {}
 
     // parse and store serie options in dedicated object (eg. color=red in plotline arguments)
-    for (let i = 0; i < args.length; i++) {
+    for (let i = 1; i < args.length; i++) {
       try {
         const [, key, value] = args[i].match(/^(\w+)\s*=(.*)/)
 
