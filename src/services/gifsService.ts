@@ -65,6 +65,8 @@ class GifsService {
       delete this.promisesOfGifs[keyword]
 
       if (storedGifs && Date.now() - storedGifs.timestamp < 1000 * 60 * 60 * 24 * 7) {
+        this.cache[keyword] = storedGifs.data
+
         return storedGifs.data
       } else {
         return this.fetchGifByKeyword(keyword)

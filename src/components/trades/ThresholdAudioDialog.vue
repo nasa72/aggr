@@ -149,6 +149,7 @@ import audioService from '@/services/audioService'
 import dialogService from '@/services/dialogService'
 import AudioAssistantDialog from './AudioAssistantDialog.vue'
 import panesSettings from '@/store/panesSettings'
+import workspacesService from '@/services/workspacesService'
 
 export default {
   props: {
@@ -172,7 +173,8 @@ export default {
     sellError: null,
     showHelp: false,
     focusedSide: null,
-    loopingSide: null
+    loopingSide: null,
+    uploadedSounds: []
   }),
   computed: {
     threshold: function() {
@@ -214,6 +216,15 @@ export default {
     if (this._loopingTimeout) {
       clearTimeout(this._loopingTimeout)
       this._loopingTimeout = false
+    }
+
+    for (const name of this.uploadedSounds) {
+      workspacesService.removeSound(name).then(() => {
+        this.$store.dispatch('app/showNotice', {
+          title: `Deleted ${this.uploadedSound} (canceled)`,
+          type: 'info'
+        })
+      })
     }
 
     for (const behave of this._behaves) {
