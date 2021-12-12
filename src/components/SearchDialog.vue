@@ -904,10 +904,12 @@ export default {
     cursor: pointer;
     opacity: 0.5;
     user-select: none;
+    display: flex;
 
     .icon-up {
       transition: transform 0.2s $ease-out-expo;
-      vertical-align: middle;
+      line-height: inherit;
+      margin-left: auto;
     }
 
     &:first-child {

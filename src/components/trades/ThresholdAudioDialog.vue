@@ -65,7 +65,7 @@
         When buy
       </label>
       <div class="d-flex">
-        <button v-if="buyAudio !== threshold.buyAudio" class="btn -green mr4" @click="testOriginal('buy', $event)" title="Original" v-tippy>
+        <button v-if="buyAudio !== threshold.buyAudio" class="btn -green mr8" @click="testOriginal('buy', $event)" title="Original" v-tippy>
           <i class="icon-volume-high"></i>
         </button>
         <textarea
@@ -76,17 +76,18 @@
           :value="buyAudio"
           @blur="setInput($event.target.value, 'buy')"
           spellcheck="false"
+          @focus="focusedSide = 'buy'"
         ></textarea>
-        <button class="btn -green ml4" @click="testCustom('buy', $event)" @dblclick="doTheLoop('buy')" title="Custom">
+        <button class="btn -green ml8" @click="testCustom('buy', $event)" @dblclick="doTheLoop('buy')" title="Custom">
           <i class="icon-volume-high"></i>
         </button>
       </div>
 
-      <small class="help-text">
-        <i class="icon-info -lower mr4"></i>
-        <code v-if="buyAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
-        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,gain,holdDuration,delay,startTime,fadeIn,fadeOut,startGain,endGain)</code>
-      </small>
+      <div v-if="focusedSide === 'buy'" class="mt8 d-flex">
+        <button class="btn -small -accent" @click="openSoundAssistant('synth', 'buy')"><i class="icon-plus mr8"></i> Synthetize sound</button>
+        <button class="btn -small -accent ml8" @click="openSoundAssistant('file', 'buy')"><i class="icon-plus mr8"></i> Use sound file</button>
+        <button class="btn -small -red mlauto -text" @click="reset('buy')"><i class="icon-eraser mr8"></i> Reset</button>
+      </div>
 
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
     </div>
@@ -95,7 +96,7 @@
         When sell
       </label>
       <div class="d-flex">
-        <button v-if="sellAudio !== threshold.sellAudio" class="btn -red mr4" @click="testOriginal('sell', $event)" title="Original" v-tippy>
+        <button v-if="sellAudio !== threshold.sellAudio" class="btn -red mr8" @click="testOriginal('sell', $event)" title="Original" v-tippy>
           <i class="icon-volume-high"></i>
         </button>
         <textarea
@@ -106,22 +107,23 @@
           :value="sellAudio"
           @blur="setInput($event.target.value, 'sell')"
           spellcheck="false"
+          @focus="focusedSide = 'sell'"
         ></textarea>
-        <button class="btn -red ml4" @click="testCustom('sell', $event)" @dblclick="doTheLoop('sell')">
+        <button class="btn -red ml8" @click="testCustom('sell', $event)" @dblclick="doTheLoop('sell')">
           <i class="icon-volume-high"></i>
         </button>
       </div>
 
-      <small class="help-text">
-        <i class="icon-info -lower mr4"></i>
-        <code v-if="sellAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
-        <code v-else-if="sellAudio.startsWith('playurl(')">playurl(url,gain,holdDuration,delay,startTime,fadeIn,fadeOut,startGain,endGain)</code>
-      </small>
+      <div v-if="focusedSide === 'sell'" class="mt8 d-flex">
+        <button class="btn -small -accent" @click="openSoundAssistant('synth', 'sell')">Synthetize sound</button>
+        <button class="btn -small -accent ml8" @click="openSoundAssistant('file', 'sell')">Use sound file</button>
+        <button class="btn -small -red mlauto -text" @click="reset('sell')"><i class="icon-eraser mr8"></i> Reset</button>
+      </div>
 
       <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
     </div>
     <footer>
-      <a href="javascript:void(0);" class="btn -text mrauto" @click="restartWebAudio()">Stop all</a>
+      <a href="javascript:void(0);" class="btn -text mrauto" @click="restartWebAudio()" v-tippy title="Clear queued sounds">Stop all</a>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
       <button class="btn -large" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
     </footer>
@@ -134,12 +136,17 @@ import Behave from 'behave-js'
 import { formatAmount } from '@/utils/helpers'
 import audioService from '@/services/audioService'
 import dialogService from '@/services/dialogService'
+import AudioAssistantDialog from './AudioAssistantDialog.vue'
+import panesSettings from '@/store/panesSettings'
 
 export default {
   props: {
     paneId: {
       required: true,
       type: String
+    },
+    thresholds: {
+      required: true
     },
     thresholdId: {
       required: true,
@@ -152,18 +159,15 @@ export default {
     sellAudio: '',
     buyError: null,
     sellError: null,
-    showHelp: false
+    showHelp: false,
+    focusedSide: null
   }),
   computed: {
     threshold: function() {
-      if (this.thresholdId === 'liquidations') {
-        return this.$store.state[this.paneId].liquidations
-      }
-
-      return this.$store.state[this.paneId].thresholds.find(t => t.id === this.thresholdId)
+      return this.thresholds.find(t => t.id === this.thresholdId)
     },
     amounts: function() {
-      return this.$store.state[this.paneId].thresholds.map(t => t.amount)
+      return this.thresholds.map(t => t.amount)
     },
     audioPitch: function() {
       return this.$store.state[this.paneId].audioPitch
@@ -226,7 +230,7 @@ export default {
         const litteral = this[side + 'Audio']
 
         try {
-          this.getAdapter(litteral, side)
+          this.emulateAudioFunction(litteral, side)
         } catch (error) {
           if (alert) {
             dialogService.confirm({
@@ -242,15 +246,17 @@ export default {
 
       return true
     },
-    testCustom(side, event) {
+    async testCustom(side, event, litteral) {
       if (this.looping) {
         clearTimeout(this.looping)
         this.looping = false
       }
 
-      const litteral = this[side + 'Audio']
+      if (!litteral) {
+        litteral = this[side + 'Audio']
+      }
 
-      this.test(litteral, side, event)
+      return await this.test(litteral, side, event)
     },
     testOriginal(side, event) {
       if (this.looping) {
@@ -274,34 +280,21 @@ export default {
     },
     async test(litteral, side, event) {
       let percent = 1
-      let level
       let amount
 
-      for (let i = 0; i < this.amounts.length; i++) {
-        if (this.amounts[i] < this.threshold.amount) {
-          continue
-        }
+      const range = this.max - this.min
 
-        if (amount && amount < this.amounts[i]) {
-          break
-        }
-
-        const range = this.max - this.min
-
-        if ((event && event.shiftKey) || !range) {
-          amount = this.min
-        } else {
-          amount = this.min + Math.random() * range
-          percent = amount / this.amounts[1]
-        }
-
-        level = i
+      if ((event && event.shiftKey) || !range) {
+        amount = this.min
+      } else {
+        amount = this.min + Math.random() * range
+        percent = amount / this.amounts[1]
       }
 
       if (amount) {
-        ;(await this.getAdapter(litteral, side))(audioService, percent, side, level)
+        const success = await this.emulateAudioFunction(litteral, side, percent)
 
-        if (event) {
+        if (success && event) {
           this.$store.dispatch('app/showNotice', {
             id: 'testing-threshold-audio',
             type: side === 'buy' ? 'success' : 'error',
@@ -309,22 +302,28 @@ export default {
             timeout: 1000
           })
         }
+
+        return success
       }
     },
     formatAmount(amount) {
       return formatAmount(amount)
     },
-    async getAdapter(litteral, side) {
+    async emulateAudioFunction(litteral, side, percent) {
       try {
         const adapter = await audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
 
+        if (typeof percent !== 'undefined') {
+          adapter(audioService, percent, side, this.index)
+        }
+
         this[side + 'Error'] = null
 
-        return adapter
+        return true
       } catch (error) {
         this[side + 'Error'] = error.message
 
-        throw error
+        return false
       }
     },
     initBehave() {
@@ -342,6 +341,33 @@ export default {
             fence: false
           })
         )
+      }
+    },
+    openSoundAssistant(type, side) {
+      const dialog = dialogService.open(AudioAssistantDialog, {
+        type,
+        error: this[side + 'Error']
+      })
+
+      dialog.$on('test', ({ event, litteral }) => this.testCustom(side, event, litteral))
+
+      dialog.$on('append', ({ litteral, uploadedSound }) => {
+        if (uploadedSound) {
+          this.uploadedSounds.push(uploadedSound)
+        }
+
+        if (this[side + 'Audio'].trim().length) {
+          this[side + 'Audio'] += `\n${litteral}`
+        } else {
+          this[side + 'Audio'] = litteral
+        }
+      })
+    },
+    reset(side) {
+      const defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type].state))
+
+      if (defaultSettings.thresholds[Math.min(this.index, 3)]) {
+        this[side + 'Audio'] = defaultSettings.thresholds[Math.min(this.index, 3)][side + 'Audio']
       }
     }
   }

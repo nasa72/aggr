@@ -1,4 +1,3 @@
-import dialogService from '@/services/dialogService'
 import store from '../store'
 
 const DAY = 60 * 60 * 24
@@ -246,7 +245,7 @@ export function parseFunctionArguments(str) {
   } while (paranthesisMatch && iteration < 100)
 
   if (iteration >= 100) {
-    throw new Error('maxiumum parseFunctionArguments iteration reached')
+    throw new Error('Maxiumum parseFunctionArguments iteration reached')
   }
 
   return str.split(',').map(arg => arg.trim().replace(/#COMMA#/g, ','))
@@ -327,40 +326,19 @@ export function fallbackCopyTextToClipboard(text) {
   } catch (err) {
     console.error('Fallback: Oops, unable to copy', err)
   }
-
-  document.body.removeChild(textArea)
 }
 
-export function browseFile(): Promise<string | ArrayBuffer> {
+export function browseFile(): Promise<File> {
   const input = document.createElement('input') as HTMLInputElement
   input.type = 'file'
 
   return new Promise(resolve => {
     input.onchange = (event: any) => {
       if (!event.target.files.length) {
-        throw new Error('Invalid selection')
+        resolve(null)
       }
 
-      const file = event.target.files[0]
-      const reader = new FileReader()
-      reader.readAsText(file, 'UTF-8')
-
-      reader.onload = async readerEvent => {
-        return dialogService
-          .confirm({
-            title: 'Disclaimer',
-            message: `Aggr disclaims all liability for damages , consequential or otherwise,<br>arising out of or in connection with the current import.`,
-            ok: 'I understand',
-            cancel: 'Cancel import'
-          })
-          .then(accepted => {
-            if (accepted) {
-              resolve(readerEvent.target.result)
-            } else {
-              throw new Error('Rejected disclaimer')
-            }
-          })
-      }
+      resolve(event.target.files[0])
     }
 
     input.click()

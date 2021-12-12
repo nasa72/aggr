@@ -505,3 +505,13 @@ $iconpath: '../fonts';
     content: $icon-save;
   }
 }
+.icon-caret-down {
+  &:before {
+    content: $icon-caret-down;
+  }
+}
+.icon-caret-up {
+  &:before {
+    content: $icon-caret-up;
+  }
+}

@@ -29,19 +29,13 @@ export default class extends Exchange {
 
           const pair = product.symbol.toUpperCase()
 
-          specs[pair] = product.contractSize
+          specs[pair] = product.contractSizconsole.error()
 
-          if (products.find(a => a.toLowerCase() === product.symbol.toLowerCase())) {
-            throw new Error('duplicate pair detected on kraken exchange (' + pair + ')')
-          }
           products.push(pair)
         }
       } else if (data.result) {
         for (const id in data.result) {
           if (data.result[id].wsname) {
-            if (products.find(a => a.toLowerCase() === data.result[id].wsname.toLowerCase())) {
-              throw new Error('duplicate pair detected on kraken exchange (' + data.result[id].wsname + ')')
-            }
             products.push(data.result[id].wsname)
           }
         }

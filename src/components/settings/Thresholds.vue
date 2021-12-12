@@ -238,7 +238,7 @@ import { Threshold } from '@/store/panesSettings/trades'
       required: true
     },
     thresholds: {
-      default: true
+      required: true
     }
   }
 })
@@ -526,6 +526,7 @@ export default class extends Vue {
   openThresholdAudio(thresholdId) {
     dialogService.open(ThresholdAudioDialog, {
       paneId: this.paneId,
+      thresholds: this.thresholds,
       thresholdId
     })
   }

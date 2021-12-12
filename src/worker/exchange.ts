@@ -94,7 +94,7 @@ class Exchange extends EventEmitter {
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   getUrl(pair: string): string {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**
@@ -324,7 +324,7 @@ class Exchange extends EventEmitter {
 
     if (api.readyState !== WebSocket.CLOSED) {
       if (api._connected.length) {
-        throw new Error(`cannot unbind api that still has pairs linked to it`)
+        throw new Error(`Cannot unbind api that still has pairs linked to it`)
       }
 
       console.debug(`[${this.id}.removeWs] close api ${api.url}`)
@@ -478,7 +478,7 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api WebSocket instance
    */
   onMessage(event, api): boolean {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**

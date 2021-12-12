@@ -10,7 +10,6 @@
     :vertical-compact="true"
     :use-css-transforms="true"
     :use-style-cursor="false"
-    @layout-ready="layoutReady = true"
     @layout-updated="onLayoutUpdated"
   >
     <grid-item
@@ -26,7 +25,13 @@
       @container-resized="onContainerResized"
       @resized="onItemResized"
     >
-      <component v-if="layoutReady && $store.state[gridItem.i]._booted" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
+      <component
+        v-if="$store.state[gridItem.i] && $store.state[gridItem.i]._booted"
+        class="pane"
+        ref="panes"
+        :is="gridItem.type"
+        :paneId="gridItem.i"
+      ></component>
     </grid-item>
   </grid-layout>
 </template>
@@ -53,7 +58,6 @@ import { GridItem } from '@/store/panes'
 export default class extends Vue {
   draggable = true
   resizable = true
-  layoutReady = false
   rowHeight = 80
   cols = null
   breakpoint = null
@@ -149,18 +153,10 @@ export default class extends Vue {
     this.$store.commit('panes/UPDATE_ITEM', item)
   }
   onLayoutUpdated(gridItems: GridItem[]) {
-    if (!this.layoutReady) {
-      return
-    }
-
     this.$store.commit('panes/UPDATE_LAYOUT', gridItems)
   }
 
   onContainerResized(id, h, w, hPx, wPx) {
-    if (!this.layoutReady) {
-      return
-    }
-
     this.resizePane(id, +hPx, +wPx)
   }
 

@@ -4,12 +4,12 @@
     <p v-if="!exchangesReady">...</p>
     <template v-else>
       <pre v-if="showMore" v-text="paneMarketStringified"></pre>
-      <div v-else>
-        <div>
-          <button class="btn -accent mx4 -small" v-for="(pair, index) of pairs" :key="index" disabled>{{ pair }}</button>
-        </div>
+      <div v-else class="pl16 pr16">
+        <button class="btn -accent mx4 -small" v-for="(pair, index) of pairs" :key="index" disabled>{{ pair }}</button>
       </div>
-      <button class="mt16 btn -text trades-placeholder__dimmed" @click="toggleShowMore">{{ showMore ? 'Show less' : 'Show more' }}</button>
+      <button class="mt8 btn -text trades-placeholder__dimmed -small" @click="toggleShowMore">
+        {{ showMore ? 'Show less' : 'Show more' }}
+      </button>
     </template>
   </div>
 </template>
@@ -111,7 +111,12 @@ export default class extends Vue {
 
 <style lang="scss">
 .trades-placeholder {
-  padding: 1em 0 2em;
+  padding: 2em;
+  margin: auto;
+
+  p {
+    margin-top: 0;
+  }
 
   .trades-placeholder__dimmed {
     opacity: 0.5;

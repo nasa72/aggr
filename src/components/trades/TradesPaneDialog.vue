@@ -6,7 +6,7 @@
     </template>
     <trades-settings :paneId="paneId" />
     <footer>
-      <presets type="trades" :adapter="getPreset" @apply="resetPane($event)" class="-left -top" />
+      <presets type="trades" :adapter="getPreset" @apply="resetPane()" class="-left -top" />
     </footer>
   </Dialog>
 </template>

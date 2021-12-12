@@ -29,8 +29,8 @@
               <i class="icon-cog"></i>
             </template>
             <template v-slot:option="{ value }">
-              <span>{{ value.label }}</span>
               <i :class="'icon-' + value.icon"></i>
+              <span>{{ value.label }}</span>
             </template>
           </dropdown>
           <dropdown :options="workspacesToolsMenu" selectionClass="-text">
@@ -38,8 +38,8 @@
               <i class="icon-plus"></i>
             </template>
             <template v-slot:option="{ value }">
-              <span>{{ value.label }}</span>
               <i :class="'icon-' + value.icon"></i>
+              <span>{{ value.label }}</span>
             </template>
           </dropdown>
         </div>
@@ -215,7 +215,6 @@ import { ago, browseFile } from '../../utils/helpers'
 
 import Exchange from './Exchange.vue'
 import DonoDropdown from './DonoDropdown.vue'
-import SettingsImportConfirmation from './ImportConfirmation.vue'
 
 import dialogService from '../../services/dialogService'
 import AudioSettings from './AudioSettings.vue'
@@ -227,6 +226,7 @@ import { APPLICATION_START_TIME } from '@/utils/constants'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
+import importService from '@/services/importService'
 
 export default {
   mixins: [DialogMixin],
@@ -355,12 +355,6 @@ export default {
       }, 1000)
     },
 
-    async importWorkspace(workspace) {
-      await workspacesService.setCurrentWorkspace(await workspacesService.importWorkspace(workspace), true)
-
-      this.getWorkspaces()
-    },
-
     async getWorkspaces() {
       const workspaces = await workspacesService.getWorkspaces()
 
@@ -449,24 +443,20 @@ export default {
     },
 
     async uploadWorkspace() {
-      const content = await browseFile()
+      const file = await browseFile()
 
-      const workspace = workspacesService.validateWorkspace(content)
-
-      if (!workspace) {
+      if (!file) {
         return
       }
 
-      if (
-        (await workspacesService.getWorkspace(workspace.id)) &&
-        !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
-      ) {
-        return
-      }
+      try {
+        await workspacesService.addAndSetWorkspace(await importService.importWorkspace(file), true)
 
-      if (await dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
-        this.close().then(() => {
-          this.importWorkspace(workspace)
+        this.getWorkspaces()
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: error.message,
+          type: 'error'
         })
       }
     },

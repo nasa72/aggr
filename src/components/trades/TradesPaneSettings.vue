@@ -72,7 +72,7 @@
           <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
         </div>
 
-        <div class="form-group">
+        <div class="form-group" v-if="tradeType !== 'liquidations'" key="liquidations">
           <label class="mb8">Trades</label>
           <thresholds :paneId="paneId" :thresholds="thresholds" />
 
@@ -89,7 +89,7 @@
             </a>
           </div>
         </div>
-        <div class="form-group mt16">
+        <div class="form-group mt16" v-if="tradeType !== 'trades'" key="trades">
           <label class="mb8">Liquidations</label>
           <thresholds :paneId="paneId" :thresholds="liquidations" />
 
@@ -449,6 +449,20 @@ export default class extends Vue {
     let updateThresholdsAmounts = null
 
     if (presetData) {
+      if (presetData[0]) {
+        // retro compatibility
+        let liquidationsThreshold
+        if (presetData.liquidations) {
+          liquidationsThreshold = presetData.liquidations
+          delete presetData.liquidations
+        }
+        presetData = {
+          thresholds: Object.values(presetData),
+          liquidations: liquidationsThreshold ? [liquidationsThreshold] : null
+        }
+        debugger
+      }
+
       for (const type of ['thresholds', 'liquidations']) {
         if (!presetData[type]) {
           continue
@@ -503,12 +517,12 @@ export default class extends Vue {
     if (updateThresholdsAmounts) {
       this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
         id: referenceThreshold.id,
-        amount: referenceThreshold.amount
+        value: referenceThreshold.amount
       })
     }
 
     if (updateThresholdsColors) {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLORS', {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
         id: referenceThreshold.id,
         side: 'buy',
         value: referenceThreshold.buyColor

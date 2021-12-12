@@ -6,7 +6,7 @@
     </template>
     <chart-pane-settings :paneId="paneId" />
     <footer>
-      <presets type="chart" :adapter="getPreset" @apply="resetPane($event)" class="-left -top" />
+      <presets type="chart" :adapter="getPreset" @apply="resetPane()" class="-left -top" />
     </footer>
   </Dialog>
 </template>

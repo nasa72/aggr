@@ -1,7 +1,7 @@
 <template>
-  <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos }">
+  <div class="pane-trades">
     <pane-header :paneId="paneId" />
-    <ul ref="tradesContainer" class="hide-scrollbar"></ul>
+    <ul ref="tradesContainer" :class="['hide-scrollbar', this.showLogos && '-logos', !this.monochromeLogos && '-logos-colors']"></ul>
     <trades-placeholder v-if="showPlaceholder" :paneId="paneId"></trades-placeholder>
   </div>
 </template>
@@ -49,6 +49,7 @@ interface PreparedColorStep {
   min?: number
   max?: number
   range?: number
+  level?: number
   buy: {
     from: number[]
     to: number[]
@@ -126,6 +127,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
+    console.log('trade created')
     this._tradesCount = 0
 
     this.cachePreferences()
@@ -142,6 +144,7 @@ export default class extends Mixins(PaneMixin) {
         case 'settings/TOGGLE_SLIPPAGE':
         case this.paneId + '/TOGGLE_TRADE_TYPE':
         case this.paneId + '/TOGGLE_TRADES_PAIRS':
+        case this.paneId + '/TOGGLE_LOGOS':
           this.cachePreferences()
           this.refreshList()
           break
@@ -188,10 +191,12 @@ export default class extends Mixins(PaneMixin) {
     })
   }
   mounted() {
+    console.log('trade mounted')
     this.startTimeAgoInterval()
   }
 
   beforeDestroy() {
+    console.log('trade before destroy')
     aggregatorService.off('trades', this.onTrades)
 
     this._onStoreMutation()
@@ -398,9 +403,9 @@ export default class extends Mixins(PaneMixin) {
       pairName = `<div class="trade__pair">${trade.pair.replace('_', ' ')}</div>`
     }
 
-    return `<li class="trade -${trade.exchange} -${trade.side} -level-${level}${trade.liquidation ? ' -liquidation' : ''}" title="${trade.exchange}:${
-      trade.pair
-    }" style="${this.getTradeInlineStyles(trade, colorStep, significantAmount)}">
+    return `<li class="trade -${trade.exchange} -${trade.side} -level-${colorStep.level}${trade.liquidation ? ' -liquidation' : ''}" title="${
+      trade.exchange
+    }:${trade.pair}" style="${this.getTradeInlineStyles(trade, colorStep, significantAmount)}">
     <div class="trade__side${sideClass}"></div>
     <div class="trade__exchange">${exchangeName}</div>
     ${pairName}
@@ -450,8 +455,10 @@ export default class extends Mixins(PaneMixin) {
   prepareColorsThresholds(thresholds, appBackgroundColor) {
     const steps = []
 
-    for (let i = 0; i < thresholds.length; i++) {
-      if (i === thresholds.length - 1) {
+    const len = thresholds.length
+
+    for (let i = 0; i < len; i++) {
+      if (i === len - 1) {
         steps.push({ ...steps[steps.length - 1], max: Infinity })
         break
       }
@@ -465,19 +472,20 @@ export default class extends Mixins(PaneMixin) {
         min: thresholds[i].amount,
         max: thresholds[i + 1].amount,
         range: thresholds[i + 1].amount - thresholds[i].amount,
+        level: Math.floor((i / (len - 1)) * 4),
         buy: {
           from: buyFrom,
           to: buyTo,
           fromLuminance: getColorLuminance(buyFrom),
           toLuminance: getColorLuminance(buyTo),
-          gif: thresholds[i].buyColor
+          gif: thresholds[i].buyGif
         },
         sell: {
           from: sellFrom,
           to: sellTo,
           fromLuminance: getColorLuminance(sellFrom),
           toLuminance: getColorLuminance(sellTo),
-          gif: thresholds[i].sellColor
+          gif: thresholds[i].sellGif
         }
       })
     }
@@ -543,14 +551,15 @@ export default class extends Mixins(PaneMixin) {
   cachePreferences() {
     if (!this._preferences) {
       this._preferences = {
-        paneMarkets: {}
+        paneMarkets: {},
+        marketsMultipliers: {}
       }
     }
 
     this._preferences.slippageMode = this.$store.state.settings.calculateSlippage
     this._preferences.showTrades = this.tradeType === 'both' || this.tradeType === 'trades'
     this._preferences.showLiquidations = this.tradeType === 'both' || this.tradeType === 'liquidations'
-    this._preferences.showGifs = this.$store.state.settings.disableAnimations
+    this._preferences.showGifs = !this.$store.state.settings.disableAnimations
     this._preferences.showLogos = this.showLogos
     this._preferences.showTradesPairs = this.showTradesPairs
   }
@@ -572,7 +581,7 @@ export default class extends Mixins(PaneMixin) {
 
       const multiplier = this.$store.state[this.paneId].multipliers[identifier]
 
-      if (typeof multiplier !== undefined) {
+      if (typeof multiplier !== 'undefined') {
         this._preferences.marketsMultipliers[identifier] = multiplier
       }
 
@@ -650,6 +659,7 @@ export default class extends Mixins(PaneMixin) {
 <style lang="scss">
 .pane-trades {
   font-weight: 400;
+
   ul {
     margin: 0;
     padding: 0;
@@ -658,56 +668,65 @@ export default class extends Mixins(PaneMixin) {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     scrollbar-width: none;
-  }
 
-  &.-large {
-    font-weight: 500;
-    .trade {
-      padding-top: 3px;
-      padding-bottom: 5px;
-    }
-  }
-
-  &.-logos {
-    .trade__exchange {
-      overflow: visible;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      font-size: 100%;
-      flex-grow: 0;
-      max-width: 7%;
-      flex-basis: 7%;
-
-      &:before {
-        font-family: 'icon';
-        display: inline-block;
-        vertical-align: -2px;
-        font-weight: 400;
-      }
-    }
-
-    @each $exchange, $icon in $exchanges {
-      .-#{$exchange} .trade__exchange:before {
-        content: $icon;
-      }
-    }
-
-    &.-logos-colors {
+    &.-logos {
       .trade__exchange {
-        height: 1em;
-        background-position: center;
+        overflow: visible;
+        text-align: center;
+        font-size: 95%;
+        max-width: 10%;
+        flex-basis: 10%;
 
         &:before {
-          display: none;
+          font-family: 'icon';
+          font-weight: 400;
+          font-size: 1.25em;
+          line-height: 0;
+          position: relative;
+          top: 0.125em;
         }
       }
 
       @each $exchange, $icon in $exchanges {
-        .-#{$exchange} .trade__exchange {
-          background-image: url('../../assets/exchanges/#{$exchange}.svg');
+        .-#{$exchange} .trade__exchange:before {
+          content: $icon;
         }
       }
+
+      &.-logos-colors {
+        .trade__exchange {
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 1.25em;
+
+          &:before {
+            display: none;
+          }
+        }
+
+        @each $exchange, $icon in $exchanges {
+          .-#{$exchange} .trade__exchange {
+            background-image: url('../../assets/exchanges/#{$exchange}.svg');
+          }
+        }
+      }
+    }
+  }
+
+  &.-large {
+    ul {
+      font-weight: 500;
+    }
+
+    &:not(.-logos) {
+      .trade__exchange,
+      .trade__pair {
+        font-size: 75%;
+      }
+    }
+
+    .trade__time {
+      font-size: 75%;
     }
   }
 }
@@ -724,13 +743,10 @@ export default class extends Mixins(PaneMixin) {
 
 .trade {
   display: flex;
-  flex-flow: row nowrap;
   background-position: center center;
   background-size: cover;
   background-blend-mode: overlay;
   position: relative;
-  align-items: center;
-  padding: 1px 0 3px;
 
   &:after {
     content: '';
@@ -756,7 +772,7 @@ export default class extends Mixins(PaneMixin) {
 
   &.-liquidation {
     .icon-side {
-      font-weight: 400;
+      font-size: inherit;
 
       &:after {
         margin-left: 1rem;
@@ -791,25 +807,29 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-level-0 {
-    height: 1.5em;
+    line-height: 2em;
     font-size: 0.875em;
   }
 
   &.-level-1 {
-    height: 1.5em;
+    line-height: 1.875em;
     font-size: 1em;
   }
 
   &.-level-2 {
-    height: 1.625em;
+    line-height: 2em;
     font-size: 1.125em;
+    font-weight: 500;
+    padding-bottom: 1px;
   }
 
   &.-level-3 {
-    height: 2em;
+    line-height: 2em;
     box-shadow: 0 0 20px rgba(black, 0.5);
     z-index: 1;
     font-size: 1.25em;
+    padding-bottom: 2px;
+    font-weight: 600;
   }
 
   > div {
@@ -821,31 +841,14 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__side {
     overflow: visible;
-    flex-grow: 0;
     max-width: 10%;
     flex-basis: 10%;
     text-align: center;
+    line-height: inherit;
   }
 
   .icon-side {
-    font-family: 'icon';
-    font-weight: 600;
-
-    &:before {
-      display: inline-block;
-      vertical-align: -2px;
-    }
-  }
-
-  .trade__pair {
-    text-align: left;
-    flex-grow: 0.4;
     font-size: 75%;
-    line-height: 1;
-
-    + .trade__price {
-      flex-grow: 0.5;
-    }
   }
 
   .icon-currency,
@@ -854,19 +857,26 @@ export default class extends Mixins(PaneMixin) {
     line-height: 0;
   }
 
+  .trade__pair {
+    font-size: 87.5%;
+    text-align: left;
+    flex-grow: 0.4;
+    margin-left: 2%;
+
+    + .trade__price {
+      flex-grow: 0.5;
+    }
+  }
+
   .trade__exchange {
-    background-repeat: no-repeat;
-    white-space: normal;
-    word-break: inherit;
-    font-size: 75%;
-    line-height: 1;
+    font-size: 87.5%;
     text-align: left;
     flex-grow: 0.4;
   }
 
   .trade__price {
     flex-grow: 0.6;
-    margin-left: 4%;
+    margin-left: 2%;
 
     small {
       font-size: 0.75em;
@@ -879,10 +889,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__amount {
-    text-align: left;
-    position: relative;
     flex-grow: 0.5;
-    padding: 0 1px;
+    padding-left: 2%;
 
     .trade__amount__base {
       display: none;
@@ -901,11 +909,11 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__time {
     text-align: right;
-    flex-grow: 0;
     overflow: visible;
     max-width: 9%;
     flex-basis: 9%;
-    margin-right: 3%;
+    margin-right: 2%;
+    font-size: 87.5%;
   }
 }
 

@@ -214,8 +214,24 @@ button {
       z-index: 1;
 
       + span {
-        padding-right: .5em;
+        padding-right: 0.5em;
       }
+    }
+  }
+
+  &.-file {
+    position: relative;
+
+    input[type='file'] {
+      opacity: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
     }
   }
 }

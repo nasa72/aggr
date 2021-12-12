@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import workspacesService from './workspacesService'
 
 export type AudioFunction = (audioService: AudioService, ratio: number, side: 'buy' | 'sell', level: number) => void
 
@@ -190,29 +191,34 @@ class AudioService {
     }
   }
 
-  loadSoundBuffer(url) {
-    return new Promise((resolve, reject) => {
-      if (AudioService.savedAudioBuffers[url] === undefined || !(AudioService.savedAudioBuffers[url] instanceof AudioBuffer)) {
-        fetch(url)
-          .then(res => res.arrayBuffer())
-          .then(arrayBuffer => {
-            this.context
-              .decodeAudioData(arrayBuffer)
-              .then(audioBuffer => {
-                AudioService.savedAudioBuffers[url] = audioBuffer
-                resolve(audioBuffer)
-              })
-              .catch(error => {
-                reject(error)
-              })
-          })
-          .catch(error => {
-            reject(error)
-          })
-      } else {
-        resolve(AudioService.savedAudioBuffers[url])
-      }
+  fetchArrayBuffer(url: string) {
+    return fetch(url).then(res => res.arrayBuffer())
+  }
+
+  async retrieveArrayBuffer(name: string) {
+    const blob = (await workspacesService.getSound(name)).data
+    const reader = new FileReader()
+
+    return new Promise<ArrayBuffer>(resolve => {
+      reader.onloadend = event => resolve(event.target.result as ArrayBuffer)
+      reader.readAsArrayBuffer(blob)
     })
+  }
+
+  async loadSoundBuffer(url) {
+    if (AudioService.savedAudioBuffers[url]) {
+      return AudioService.savedAudioBuffers[url]
+    }
+
+    let arrayBuffer: ArrayBuffer
+
+    if (url.indexOf('/') !== -1) {
+      arrayBuffer = await this.fetchArrayBuffer(url)
+    } else {
+      arrayBuffer = await this.retrieveArrayBuffer(url)
+    }
+
+    AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(arrayBuffer)
   }
 
   async playurl(
@@ -382,7 +388,7 @@ class AudioService {
           const functionArguments = parseFunctionArguments(originalParameters)
 
           if (!functionArguments) {
-            throw new Error('invalid argument(s) for ' + functionMatch[0] + ' function')
+            throw new Error('Invalid argument(s) for ' + functionMatch[0] + ' function')
           }
 
           let defaultArguments

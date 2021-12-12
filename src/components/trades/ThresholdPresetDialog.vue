@@ -7,7 +7,7 @@
       <div class="form-group mb8">
         <label>Choose type</label>
 
-        <label class="checkbox-control mt16">
+        <label class="checkbox-control mt8">
           <input type="checkbox" class="form-control" v-model="includeThresholds" />
           <div></div>
           <span>Trades</span>
@@ -20,10 +20,10 @@
           <span>Liquidations</span>
         </label>
       </div>
-      <div class="form-group mb8 mt8">
+      <div class="form-group mb8 mt16">
         <label>Choose what to include in preset</label>
 
-        <label class="checkbox-control mt16">
+        <label class="checkbox-control mt8">
           <input type="checkbox" class="form-control" v-model="includeAmounts" />
           <div></div>
           <span>Amounts</span>

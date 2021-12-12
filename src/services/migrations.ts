@@ -42,6 +42,11 @@ export const databaseUpgrades = {
     db.createObjectStore('presets', {
       keyPath: 'name'
     })
+  },
+  3: (db: IDBPDatabase<AggrDB>) => {
+    db.createObjectStore('sounds', {
+      keyPath: 'name'
+    })
   }
 }
 

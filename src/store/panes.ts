@@ -225,7 +225,7 @@ const actions = {
       }
     }
 
-    await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
+    //await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
 
     aggregatorService.dispatch({
       op: 'updateBuckets',
@@ -276,7 +276,7 @@ const actions = {
 
     rootState[id]._booted = false
 
-    await sleep(100)
+    await sleep(500)
 
     this.unregisterModule(id)
 

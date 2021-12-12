@@ -51,7 +51,6 @@ import aggregatorService from './services/aggregatorService'
 
 import Notices from './components/framework/Notices.vue'
 import Menu from './components/Menu.vue'
-import SettingsImportConfirmation from './components/settings/ImportConfirmation.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
@@ -62,6 +61,7 @@ import { formatPrice } from './utils/helpers'
 import { Notice } from './store/app'
 import workspacesService from './services/workspacesService'
 import dialogService from './services/dialogService'
+import importService from './services/importService'
 
 @Component({
   name: 'App',
@@ -270,48 +270,25 @@ export default class extends Vue {
     document.body.removeEventListener('drop', this.handleDrop)
     document.body.removeEventListener('dragover', this.handleDrop)
   }
-  handleDrop(e) {
-    e.preventDefault()
+  async handleDrop(event) {
+    event.preventDefault()
 
-    if (e.type !== 'drop') {
+    if (event.type !== 'drop') {
       return false
     }
 
-    const files = e.dataTransfer.files
-
-    if (!files || !files.length) {
+    if (!event.dataTransfer.files || !event.dataTransfer.files.length) {
       return
     }
 
-    const reader = new FileReader()
-
-    reader.onload = async ({ target }) => {
-      const workspace = workspacesService.validateWorkspace(target.result)
-
-      if (!workspace) {
-        return
-      }
-
-      if (
-        (await workspacesService.getWorkspace(workspace.id)) &&
-        !(await dialogService.confirm({
-          message: `Workspace ${workspace.id} already exists`,
-          ok: 'Import anyway',
-          cancel: 'Annuler'
-        }))
-      ) {
-        return
-      }
-
-      if (
-        await dialogService.openAsPromise(SettingsImportConfirmation, {
-          workspace
-        })
-      ) {
-        workspacesService.importAndSetWorkspace(workspace)
-      }
+    try {
+      await importService.importWorkspace(event.dataTransfer.files[0])
+    } catch (error) {
+      this.$store.dispatch('app/showNotice', {
+        title: error.message,
+        type: 'error'
+      })
     }
-    reader.readAsText(files[0])
   }
   refreshMainMarkets(markets) {
     const marketsByNormalizedPair = {}

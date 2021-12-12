@@ -350,19 +350,19 @@ export default class SerieBuilder {
       } else if (args.length === 1) {
         seriePoint += args[0]
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
+        throw new Error(`Invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
       }
     } else if (expectedInput === 'range') {
       if (args.length === 2) {
         seriePoint += `{ time: ${timeProperty}, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
       }
     } else if (expectedInput === 'number') {
       if (args.length === 1) {
         seriePoint += `{ time: ${timeProperty}, value: ${args[0]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 1 value (number)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 1 value (number)`)
       }
     }
 
@@ -444,7 +444,7 @@ export default class SerieBuilder {
             FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
             continue
           } else {
-            throw new Error(`function ${functionName} doesn't exists`)
+            throw new Error(`Function ${functionName} doesn't exists`)
           }
         }
 
@@ -597,7 +597,7 @@ export default class SerieBuilder {
       } while (lengthMatch)
 
       if (!variable.length) {
-        throw new Error('unexpected no length on var')
+        throw new Error('Unexpected no length on var')
       }
 
       if (variable.length === 1) {
@@ -615,7 +615,7 @@ export default class SerieBuilder {
     try {
       adapter = this.getAdapter(silentOutput)
     } catch (error) {
-      throw new Error(`syntax error: ${error.message}`)
+      throw new Error(`Syntax error: ${error.message}`)
     }
 
     let renderer = this.getFakeRenderer(null, functions, variables, markets, references)
@@ -627,7 +627,7 @@ export default class SerieBuilder {
       try {
         adapter(renderer, functions, variables, series, options, seriesUtils)
       } catch (error) {
-        throw new Error('syntax error: ' + (typeof error === 'string' ? error : error.message))
+        throw new Error('Syntax error: ' + (typeof error === 'string' ? error : error.message))
       }
 
       for (let p = 0; p < renderer.indicators[this.indicatorId].series.length; p++) {
@@ -655,7 +655,7 @@ export default class SerieBuilder {
         }*/
 
         if (resultedType && resultedType !== plot.expectedInput) {
-          throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
+          throw new Error(`Plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
         }
 
         /*if (resultedType === 'ohlc') {

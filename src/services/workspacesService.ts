@@ -3,7 +3,7 @@ import defaultPresets from '@/store/defaultPresets.json'
 import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
-import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
+import { GifsStorage, ImportedSound, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
@@ -30,6 +30,10 @@ export interface AggrDB extends DBSchema {
   }
   presets: {
     value: Preset
+    key: string
+  }
+  sounds: {
+    value: ImportedSound
     key: string
   }
 }
@@ -326,7 +330,7 @@ class WorkspacesService {
     return this.saveWorkspace()
   }
 
-  async importWorkspace(workspace: Workspace) {
+  async addWorkspace(workspace: Workspace) {
     const timestamp = Date.now()
 
     await this.makeUniqueWorkspace(workspace)
@@ -504,67 +508,30 @@ class WorkspacesService {
     return this.db.get('presets', id)
   }
 
-  removePreset(id) {
-    return this.db.delete('presets', id)
-  }
-
   getPresetsKeysByType(type: PresetType) {
     return this.db.getAllKeys('presets', IDBKeyRange.bound(type, type + '|', true, true))
   }
 
-  async importAndSetWorkspace(workspace) {
-    await this.setCurrentWorkspace(await this.importWorkspace(workspace), true)
-
-    this.getWorkspaces()
+  removePreset(id) {
+    return this.db.delete('presets', id)
   }
 
-  validateWorkspace(raw) {
-    let workspace = null
+  saveSound(sound: ImportedSound) {
+    return this.db.put('sounds', sound)
+  }
 
-    try {
-      workspace = JSON.parse(raw)
-    } catch (error) {
-      store.dispatch('app/showNotice', {
-        type: 'error',
-        title: `The workspace you provided couldn't be parsed<br>${error.message}`
-      })
+  async getSound(id: string): Promise<ImportedSound> {
+    return this.db.get('sounds', id)
+  }
 
-      return
-    }
+  removeSound(id) {
+    return this.db.delete('sounds', id)
+  }
 
-    if (!workspace.id) {
-      store.dispatch('app/showNotice', {
-        type: 'error',
-        title: `The workspace you provided has no ID`
-      })
-      return
-    }
+  async addAndSetWorkspace(workspace) {
+    await this.setCurrentWorkspace(await this.addWorkspace(workspace), true)
 
-    if (!workspace.name) {
-      store.dispatch('app/showNotice', {
-        type: 'error',
-        title: `The workspace you provided has no name`
-      })
-      return
-    }
-
-    if (!workspace.states || Object.keys(workspace.states).length === 0) {
-      store.dispatch('app/showNotice', {
-        type: 'error',
-        title: `The workspace you provided is empty`
-      })
-      return
-    }
-
-    for (const paneId in workspace.states) {
-      const pane = workspace.states[paneId]
-
-      if (pane.type === 'website') {
-        pane.locked = true
-      }
-    }
-
-    return workspace
+    this.getWorkspaces()
   }
 
   async reset() {

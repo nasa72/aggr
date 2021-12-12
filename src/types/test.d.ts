@@ -106,4 +106,9 @@ export interface Preset {
   updatedAt: number
 }
 
+export interface ImportedSound {
+  name: string
+  data: any
+}
+
 export type ProductsData = string[] | { [prop: string]: any }

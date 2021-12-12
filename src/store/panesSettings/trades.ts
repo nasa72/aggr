@@ -54,33 +54,33 @@ const getters = {
 const state = {
   liquidations: [
     {
-      id: 'threshold',
-      amount: 10000,
+      id: 'liquidation_threshold',
+      amount: 50000,
       buyColor: 'rgba(236,64,122,0.5)',
       sellColor: 'rgba(255,152,0,0.5)',
       buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
       sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
     },
     {
-      id: 'significant',
-      amount: 25000,
+      id: 'liquidation_significant',
+      amount: 100000,
       buyColor: 'rgba(236,64,122,0.6)',
       sellColor: 'rgba(255,152,0,0.7)',
       buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
       sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
     },
     {
-      id: 'huge',
-      amount: 100000,
-      buyGif: 'rekt',
-      sellGif: 'rekt',
+      id: 'liquidation_huge',
+      amount: 200000,
+      buyGif: 'flying money',
+      sellGif: 'flying money',
       buyColor: 'rgba(236,64,122,0.7)',
       sellColor: 'rgba(255,152,0,0.8)',
       buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
       sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
     },
     {
-      id: 'rare',
+      id: 'liquidation_rare',
       amount: 1000000,
       buyGif: 'explosion',
       sellGif: 'explosion',
@@ -170,7 +170,7 @@ const actions = {
     const threshold = state.thresholds[index]
 
     if (!threshold) {
-      throw new Error('no threshold')
+      throw new Error('No threshold')
     }
 
     let payload = {
@@ -189,7 +189,7 @@ const actions = {
     const threshold = state.liquidations
 
     if (!threshold) {
-      throw new Error('no liquidation threshold')
+      throw new Error('No liquidation threshold')
     }
 
     commit('SET_LIQUIDATIONS_' + prop, value)
@@ -296,8 +296,6 @@ const mutations = {
 
         threshold[key] = null
       }
-
-      this.commit(state._id + '/UPDATE_THRESHOLD', threshold)
     }
   },
   SET_THRESHOLD_COLOR(state, { id, side, value }) {
